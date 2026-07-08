@@ -1,0 +1,45 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                 String     @id @default(uuid())
+  email              String     @unique
+  password           String
+  name               String?
+  height             Float?     // in cm
+  weight             Float?     // in kg
+  age                Int?
+  gender             String?    // MALE, FEMALE, OTHER
+  fitnessGoal        String?    // LOSE_WEIGHT, MAINTAIN, GAIN_MUSCLE
+  dailyCalorieTarget Float?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  mealLogs           MealLog[]
+
+  @@map("users")
+}
+
+model MealLog {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  description String   // text-based description or recognized items
+  calories    Float    // estimated calories
+  protein     Float    // in grams
+  carbs       Float    // in grams
+  fat         Float    // in grams
+  imageUrl    String?  // path to the meal photo
+  confidence  Float?   // AI confidence score (0.0 to 1.0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("meal_logs")
+}

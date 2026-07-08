@@ -3,16 +3,17 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './database/prisma/prisma.module';
-import { MealsModule } from './modules/meals/meals.module'; // Refresh TS server cache
+import { MealsModule } from './modules/meals/meals.module'; 
 import configuration from './config/configuration';
 import databaseConfig from './config/database.config';
+import redisConfig from './config/redis.config';
 import { validateEnv } from './config/validation.schema';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [configuration, databaseConfig],
+      load: [configuration, databaseConfig, redisConfig],
       validate: validateEnv,
     }),
     PrismaModule,

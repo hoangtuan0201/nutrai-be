@@ -57,10 +57,22 @@ backend/
 ## 🛠️ Thiết lập môi trường và chạy dự án
 
 ### 1. Chuẩn bị biến môi trường
-Tạo file `.env` tại thư mục gốc backend (đã được tạo sẵn):
+Sao chép file mẫu `.env.example` thành `.env` tại thư mục gốc backend và cấu hình các giá trị phù hợp:
+```bash
+cp .env.example .env
+```
+Các biến môi trường cơ bản:
 ```env
 PORT=3000
-DATABASE_URL="postgresql://postgres:postgrespassword@localhost:5432/nutraai_db?schema=public"
+NODE_ENV=development
+
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=your_secure_password
+POSTGRES_DB=nutraai_db
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+
+DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?schema=public"
 ```
 
 ### 2. Chạy cơ sở dữ liệu (PostgreSQL) qua Docker

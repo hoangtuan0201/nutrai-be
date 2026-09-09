@@ -18,6 +18,7 @@ export class MealsController {
   @ApiOperation({ summary: 'Create a new meal log' })
   @ApiResponse({ status: 201, description: 'Meal log successfully created.' })
   @ApiResponse({ status: 400, description: 'Invalid input data.' })
+  @ApiResponse({ status: 404, description: 'User not found.' })
   async createMeal(@Body() dto: CreateMealDto) {
     return this.commandBus.execute(new CreateMealCommand(dto));
   }

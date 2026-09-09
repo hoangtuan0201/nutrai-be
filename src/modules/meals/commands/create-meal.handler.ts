@@ -14,11 +14,11 @@ export class CreateMealHandler implements ICommandHandler<CreateMealCommand> {
     const { dto } = command;
     
     // Save to database using Repository
-    const mealLog = await this.mealsRepository.create(dto);
+    const meal = await this.mealsRepository.create(dto);
 
     // Publish event
-    this.eventBus.publish(new MealCreatedEvent(mealLog.id, mealLog.userId, mealLog.calories));
+    this.eventBus.publish(new MealCreatedEvent(meal.id, meal.userId, meal.totalCalories));
 
-    return mealLog;
+    return meal;
   }
 }

@@ -1,5 +1,7 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// ═══════════════════════════════════════════════════════════════
+// NutraAI — Complete Prisma Schema
+// Generated from approved ERD: 22 tables across 10 domains
+// ═══════════════════════════════════════════════════════════════
 
 generator client {
   provider = "prisma-client-js"
@@ -9,37 +11,653 @@ datasource db {
   provider = "postgresql"
 }
 
+// ═══════════════════════════════════════════════════════════════
+// DOMAIN 1: AUTHENTICATION & ACCOUNT
+// ═══════════════════════════════════════════════════════════════
+
+enum Role {
+  USER
+  ADMIN
+}
+
 model User {
-  id                 String     @id @default(uuid())
-  email              String     @unique
-  password           String
-  name               String?
-  height             Float?     // in cm
-  weight             Float?     // in kg
-  age                Int?
-  gender             String?    // MALE, FEMALE, OTHER
-  fitnessGoal        String?    // LOSE_WEIGHT, MAINTAIN, GAIN_MUSCLE
-  dailyCalorieTarget Float?
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
-  mealLogs           MealLog[]
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String
+  name          String?
+  avatarUrl     String?
+  role          Role      @default(USER)
+  isActive      Boolean   @default(true)
+  emailVerified Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime? // soft delete
+
+  // Relations
+  refreshTokens      RefreshToken[]
+  emailVerifications EmailVerification[]
+  passwordResets     PasswordReset[]
+  profile            UserProfile?
+  nutritionTargets   NutritionTarget[]
+  meals              Meal[]
+  aiMealAnalyses     AiMealAnalysis[]
+  chatConversations  ChatConversation[]
+  weightLogs         WeightLog[]
+  dailySummaries     DailyNutritionSummary[]
+  subscriptions      UserSubscription[]
+  payments           Payment[]
+  notifications      Notification[]
+  deviceTokens       DeviceToken[]
+  reportExports      ReportExport[]
+  settings           UserSetting?
+  aiUsageLogs        AiUsageLog[]
+  auditLogs          AuditLog[]
 
   @@map("users")
 }
 
-model MealLog {
+model RefreshToken {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token      String   @unique
+  deviceInfo String?
+  expiresAt  DateTime
+  isRevoked  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model EmailVerification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("email_verifications")
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("password_resets")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DOMAIN 2: USER PROFILE & FITNESS GOAL
+// ═══════════════════════════════════════════════════════════════
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum ActivityLevel {
+  SEDENTARY
+  LIGHT
+  MODERATE
+  VERY_ACTIVE
+  EXTRA_ACTIVE
+}
+
+enum FitnessGoal {
+  WEIGHT_LOSS
+  MAINTENANCE
+  MUSCLE_GAIN
+}
+
+model UserProfile {
+  id            String        @id @default(uuid())
+  userId        String        @unique
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dateOfBirth   DateTime?     @db.Date
+  gender        Gender?
+  heightCm      Float?
+  weightKg      Float?
+  activityLevel ActivityLevel?
+  fitnessGoal   FitnessGoal?
+  bmr           Float?
+  tdee          Float?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@map("user_profiles")
+}
+
+model NutritionTarget {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dailyCalories Float
+  dailyProtein  Float
+  dailyCarbs    Float
+  dailyFat      Float
+  effectiveFrom DateTime  @db.Date
+  effectiveTo   DateTime? @db.Date
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+
+  @@index([userId, isActive])
+  @@map("nutrition_targets")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DOMAIN 3: FOOD & MEAL TRACKING
+// ═══════════════════════════════════════════════════════════════
+
+model FoodCategory {
   id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  description String   // text-based description or recognized items
-  calories    Float    // estimated calories
-  protein     Float    // in grams
-  carbs       Float    // in grams
-  fat         Float    // in grams
-  imageUrl    String?  // path to the meal photo
-  confidence  Float?   // AI confidence score (0.0 to 1.0)
+  name        String   @unique
+  description String?
+  iconUrl     String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  @@map("meal_logs")
+  // Relations
+  foods Food[]
+
+  @@map("food_categories")
+}
+
+model Food {
+  id                String       @id @default(uuid())
+  categoryId        String
+  category          FoodCategory @relation(fields: [categoryId], references: [id])
+  name              String
+  description       String?
+  caloriesPer100g   Float
+  proteinPer100g    Float
+  carbsPer100g      Float
+  fatPer100g        Float
+  servingUnit       String       @default("g")
+  defaultServingSize Float       @default(100)
+  imageUrl          String?
+  isVerified        Boolean      @default(false)
+  isActive          Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  // Relations
+  mealItems MealItem[]
+
+  @@index([categoryId])
+  @@index([name])
+  @@map("foods")
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+}
+
+enum MealSource {
+  MANUAL
+  AI_TEXT
+  AI_IMAGE
+}
+
+model Meal {
+  id            String     @id @default(uuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mealType      MealType
+  name          String?
+  totalCalories Float
+  totalProtein  Float
+  totalCarbs    Float
+  totalFat      Float
+  imageUrl      String?
+  source        MealSource @default(MANUAL)
+  loggedDate    DateTime   @db.Date
+  loggedAt      DateTime
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  // Relations
+  items          MealItem[]
+  aiMealAnalysis AiMealAnalysis?
+
+  @@index([userId, loggedDate])
+  @@index([userId, mealType])
+  @@map("meals")
+}
+
+model MealItem {
+  id                 String   @id @default(uuid())
+  mealId             String
+  meal               Meal     @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  foodId             String?
+  food               Food?    @relation(fields: [foodId], references: [id], onDelete: SetNull)
+  foodName           String
+  portionDescription String?
+  quantity           Float    @default(1)
+  unit               String   @default("serving")
+  calories           Float
+  protein            Float
+  carbs              Float
+  fat                Float
+  sortOrder          Int      @default(0)
+  createdAt          DateTime @default(now())
+
+  @@index([mealId])
+  @@map("meal_items")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DOMAIN 4: AI FEATURES
+// ═══════════════════════════════════════════════════════════════
+
+enum AiInputType {
+  TEXT
+  IMAGE
+}
+
+enum AiAnalysisStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CONFIRMED
+  EDITED
+}
+
+model AiMealAnalysis {
+  id             String           @id @default(uuid())
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mealId         String?          @unique
+  meal           Meal?            @relation(fields: [mealId], references: [id], onDelete: SetNull)
+  inputType      AiInputType
+  inputText      String?
+  inputImageUrl  String?
+  rawAiResponse  Json
+  parsedItems    Json
+  totalCalories  Float
+  totalProtein   Float
+  totalCarbs     Float
+  totalFat       Float
+  confidence     Float
+  status         AiAnalysisStatus @default(PENDING)
+  aiModel        String
+  tokensUsed     Int?
+  latencyMs      Int?
+  createdAt      DateTime         @default(now())
+
+  @@index([userId])
+  @@index([status])
+  @@map("ai_meal_analyses")
+}
+
+model ChatConversation {
+  id            String        @id @default(uuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title         String?
+  isActive      Boolean       @default(true)
+  lastMessageAt DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  messages ChatMessage[]
+
+  @@index([userId])
+  @@map("chat_conversations")
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+model ChatMessage {
+  id              String           @id @default(uuid())
+  conversationId  String
+  conversation    ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role            ChatRole
+  content         String
+  contextSnapshot Json?
+  tokensUsed      Int?
+  latencyMs       Int?
+  createdAt       DateTime         @default(now())
+
+  @@index([conversationId, createdAt])
+  @@map("chat_messages")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DOMAIN 5: PROGRESS & ANALYTICS
+// ═══════════════════════════════════════════════════════════════
+
+model DailyNutritionSummary {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  summaryDate      DateTime @db.Date
+  totalCalories    Float    @default(0)
+  totalProtein     Float    @default(0)
+  totalCarbs       Float    @default(0)
+  totalFat         Float    @default(0)
+  targetCalories   Float
+  targetProtein    Float
+  targetCarbs      Float
+  targetFat        Float
+  mealsCount       Int      @default(0)
+  caloriePercentage Float   @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([userId, summaryDate])
+  @@map("daily_nutrition_summaries")
+}
+
+model WeightLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weightKg  Float
+  note      String?
+  loggedDate DateTime @db.Date
+  createdAt DateTime @default(now())
+
+  @@index([userId, loggedDate])
+  @@map("weight_logs")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DOMAIN 6: SUBSCRIPTION & PAYMENT
+// ═══════════════════════════════════════════════════════════════
+
+enum BillingPeriod {
+  MONTHLY
+  YEARLY
+}
+
+model SubscriptionPlan {
+  id            String        @id @default(uuid())
+  name          String        @unique
+  description   String?
+  price         Float
+  currency      String        @default("VND")
+  billingPeriod BillingPeriod
+  features      Json
+  isActive      Boolean       @default(true)
+  sortOrder     Int           @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  subscriptions UserSubscription[]
+
+  @@map("subscription_plans")
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  PENDING
+}
+
+model UserSubscription {
+  id              String             @id @default(uuid())
+  userId          String
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId          String
+  plan            SubscriptionPlan   @relation(fields: [planId], references: [id])
+  status          SubscriptionStatus
+  googlePlayToken String?
+  transactionId   String?            @unique
+  startsAt        DateTime
+  expiresAt       DateTime
+  cancelledAt     DateTime?
+  autoRenew       Boolean            @default(true)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  // Relations
+  payments Payment[]
+
+  @@index([userId, status])
+  @@map("user_subscriptions")
+}
+
+enum PaymentMethod {
+  GOOGLE_PLAY
+  APPLE_PAY
+  STRIPE
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model Payment {
+  id             String           @id @default(uuid())
+  subscriptionId String
+  subscription   UserSubscription @relation(fields: [subscriptionId], references: [id])
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount         Float
+  currency       String
+  paymentMethod  PaymentMethod
+  status         PaymentStatus
+  transactionId  String           @unique
+  receiptData    String?
+  rawResponse    Json?
+  paidAt         DateTime?
+  createdAt      DateTime         @default(now())
+
+  @@index([userId])
+  @@index([subscriptionId])
+  @@map("payments")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DOMAIN 7: NOTIFICATIONS
+// ═══════════════════════════════════════════════════════════════
+
+enum NotificationType {
+  MEAL_REMINDER
+  GOAL_ALERT
+  AI_RECOMMENDATION
+  SUBSCRIPTION
+  SYSTEM
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String
+  data      Json?
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([userId, isRead, createdAt])
+  @@map("notifications")
+}
+
+enum Platform {
+  ANDROID
+  IOS
+}
+
+model DeviceToken {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token       String   @unique
+  platform    Platform
+  deviceModel String?
+  isActive    Boolean  @default(true)
+  lastUsedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@map("device_tokens")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DOMAIN 8: REPORTS & EXPORT
+// ═══════════════════════════════════════════════════════════════
+
+enum ReportType {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum ExportFormat {
+  PDF
+  EXCEL
+}
+
+enum ExportStatus {
+  PENDING
+  GENERATING
+  COMPLETED
+  FAILED
+}
+
+model ReportExport {
+  id            String       @id @default(uuid())
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reportType    ReportType
+  format        ExportFormat
+  dateFrom      DateTime     @db.Date
+  dateTo        DateTime     @db.Date
+  fileUrl       String?
+  status        ExportStatus @default(PENDING)
+  fileSizeBytes Int?
+  createdAt     DateTime     @default(now())
+
+  @@index([userId])
+  @@map("report_exports")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DOMAIN 9: SETTINGS
+// ═══════════════════════════════════════════════════════════════
+
+enum UnitSystem {
+  METRIC
+  IMPERIAL
+}
+
+enum Theme {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+model UserSetting {
+  id                            String     @id @default(uuid())
+  userId                        String     @unique
+  user                          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitSystem                    UnitSystem @default(METRIC)
+  language                      String     @default("vi")
+  theme                         Theme      @default(SYSTEM)
+  notificationMealReminder      Boolean    @default(true)
+  notificationGoalAlert         Boolean    @default(true)
+  notificationAiRecommendation  Boolean    @default(true)
+  notificationPushEnabled       Boolean    @default(true)
+  reminderBreakfastTime         String?    // "HH:mm" format
+  reminderLunchTime             String?    // "HH:mm" format
+  reminderDinnerTime            String?    // "HH:mm" format
+  createdAt                     DateTime   @default(now())
+  updatedAt                     DateTime   @updatedAt
+
+  @@map("user_settings")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DOMAIN 10: ADMIN & AUDIT
+// ═══════════════════════════════════════════════════════════════
+
+enum AiFeature {
+  MEAL_TEXT
+  MEAL_IMAGE
+  CHAT
+  RECOMMENDATION
+}
+
+enum AiUsageStatus {
+  SUCCESS
+  FAILED
+  RATE_LIMITED
+}
+
+model AiUsageLog {
+  id            String        @id @default(uuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feature       AiFeature
+  aiModel       String
+  inputTokens   Int           @default(0)
+  outputTokens  Int           @default(0)
+  latencyMs     Int           @default(0)
+  estimatedCost Float         @default(0)
+  status        AiUsageStatus
+  usageDate     DateTime      @db.Date
+  createdAt     DateTime      @default(now())
+
+  @@index([userId, usageDate])
+  @@index([feature, usageDate])
+  @@map("ai_usage_logs")
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  ROLE_CHANGE
+  DISABLE_USER
+  EXPORT
+}
+
+model AuditLog {
+  id         String      @id @default(uuid())
+  actorId    String
+  actor      User        @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  action     AuditAction
+  entityType String
+  entityId   String?
+  oldValue   Json?
+  newValue   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime    @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
 }

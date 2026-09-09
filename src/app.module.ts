@@ -13,6 +13,7 @@ import { validateEnv } from './config/validation.schema';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      expandVariables: true,
       load: [configuration, databaseConfig, redisConfig],
       validate: validateEnv,
     }),

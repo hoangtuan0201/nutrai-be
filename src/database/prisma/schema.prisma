@@ -45,7 +45,6 @@ model User {
   weightLogs         WeightLog[]
   dailySummaries     DailyNutritionSummary[]
   subscriptions      UserSubscription[]
-  payments           Payment[]
   notifications      Notification[]
   deviceTokens       DeviceToken[]
   reportExports      ReportExport[]
@@ -130,8 +129,8 @@ model UserProfile {
   weightKg      Float?
   activityLevel ActivityLevel?
   fitnessGoal   FitnessGoal?
-  bmr           Float?
-  tdee          Float?
+  // NOTE: bmr & tdee are derived values — computed dynamically in service layer,
+  // not stored here to avoid stale data when weight/age/activity changes.
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -150,6 +149,9 @@ model NutritionTarget {
   effectiveTo   DateTime? @db.Date
   isActive      Boolean   @default(true)
   createdAt     DateTime  @default(now())
+
+  // Back-relation: summaries that used this target
+  dailySummaries DailyNutritionSummary[]
 
   @@index([userId, isActive])
   @@map("nutrition_targets")
@@ -348,24 +350,29 @@ model ChatMessage {
 // ═══════════════════════════════════════════════════════════════
 
 model DailyNutritionSummary {
-  id               String   @id @default(uuid())
-  userId           String
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  summaryDate      DateTime @db.Date
-  totalCalories    Float    @default(0)
-  totalProtein     Float    @default(0)
-  totalCarbs       Float    @default(0)
-  totalFat         Float    @default(0)
-  targetCalories   Float
-  targetProtein    Float
-  targetCarbs      Float
-  targetFat        Float
-  mealsCount       Int      @default(0)
-  caloriePercentage Float   @default(0)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                 String           @id @default(uuid())
+  userId             String
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Snapshot of which NutritionTarget was active on this day
+  nutritionTargetId  String?
+  nutritionTarget    NutritionTarget? @relation(fields: [nutritionTargetId], references: [id], onDelete: SetNull)
+  summaryDate        DateTime         @db.Date
+  totalCalories      Float            @default(0)
+  totalProtein       Float            @default(0)
+  totalCarbs         Float            @default(0)
+  totalFat           Float            @default(0)
+  // Snapshot of targets on this day (denormalized for historical accuracy)
+  targetCalories     Float
+  targetProtein      Float
+  targetCarbs        Float
+  targetFat          Float
+  mealsCount         Int              @default(0)
+  caloriePercentage  Float            @default(0)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
   @@unique([userId, summaryDate])
+  @@index([nutritionTargetId])
   @@map("daily_nutrition_summaries")
 }
 
@@ -457,8 +464,7 @@ model Payment {
   id             String           @id @default(uuid())
   subscriptionId String
   subscription   UserSubscription @relation(fields: [subscriptionId], references: [id])
-  userId         String
-  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // NOTE: userId removed — join via subscription.userId to avoid redundant FK and potential mismatch.
   amount         Float
   currency       String
   paymentMethod  PaymentMethod
@@ -469,7 +475,6 @@ model Payment {
   paidAt         DateTime?
   createdAt      DateTime         @default(now())
 
-  @@index([userId])
   @@index([subscriptionId])
   @@map("payments")
 }
@@ -588,9 +593,12 @@ model UserSetting {
   notificationGoalAlert         Boolean    @default(true)
   notificationAiRecommendation  Boolean    @default(true)
   notificationPushEnabled       Boolean    @default(true)
-  reminderBreakfastTime         String?    // "HH:mm" format
-  reminderLunchTime             String?    // "HH:mm" format
-  reminderDinnerTime            String?    // "HH:mm" format
+  // Reminder times stored as minutes from midnight (0-1439).
+  // e.g. 480 = 08:00, 720 = 12:00, 1080 = 18:00
+  // Use Int instead of String to avoid magic string parsing and enable range validation.
+  reminderBreakfastMinutes      Int?       // default: 480 (08:00)
+  reminderLunchMinutes          Int?       // default: 720 (12:00)
+  reminderDinnerMinutes         Int?       // default: 1080 (18:00)
   createdAt                     DateTime   @default(now())
   updatedAt                     DateTime   @updatedAt
 

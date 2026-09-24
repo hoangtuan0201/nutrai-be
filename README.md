@@ -147,3 +147,8 @@ graph TD
 - **HttpExceptionFilter**: Bộ lọc ngoại lệ toàn cục định dạng lại toàn bộ lỗi HTTP (404, 401, 500,...) về dạng JSON đồng nhất có trường `timestamp` và `path`.
 - **LoggingInterceptor**: Đánh chặn các cuộc gọi HTTP API, ghi nhận log phương thức, URL và thời gian phản hồi (ms) để phục vụ giám sát hiệu năng ứng dụng.
 - **JwtAuthGuard & RolesGuard**: Khung sườn phân quyền, xác thực JWT mẫu để tích hợp phân quyền truy cập API.
+
+
+Admin: admin@nutraai.com
+Người dùng tiêu chuẩn (có meal, progress, chat): user@nutraai.com
+Người dùng Pro (đã kích hoạt Pro subscription): pro@nutraai.com

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "86356630707",
+    "project_id": "nutrai-b2bdd",
+    "storage_bucket": "nutrai-b2bdd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:86356630707:android:8168bc3da69c07ba1ba4c6",
+        "android_client_info": {
+          "package_name": "com.nutraai.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOHXoT4udUjudjxcVo5jSgPTzFkthv15g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

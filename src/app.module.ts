@@ -3,10 +3,14 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './database/prisma/prisma.module';
-import { MealsModule } from './modules/meals/meals.module'; 
+import { MealsModule } from './modules/meals/meals.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { FirebaseModule } from './modules/firebase/firebase.module';
 import configuration from './config/configuration';
 import databaseConfig from './config/database.config';
 import redisConfig from './config/redis.config';
+import firebaseConfig from './config/firebase.config';
+import jwtConfig from './config/jwt.config';
 import { validateEnv } from './config/validation.schema';
 
 @Module({
@@ -14,10 +18,12 @@ import { validateEnv } from './config/validation.schema';
     ConfigModule.forRoot({
       isGlobal: true,
       expandVariables: true,
-      load: [configuration, databaseConfig, redisConfig],
+      load: [configuration, databaseConfig, redisConfig, firebaseConfig, jwtConfig],
       validate: validateEnv,
     }),
     PrismaModule,
+    FirebaseModule,
+    AuthModule,
     MealsModule,
   ],
   controllers: [AppController],

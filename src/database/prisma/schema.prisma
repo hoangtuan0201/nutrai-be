@@ -20,18 +20,25 @@ enum Role {
   ADMIN
 }
 
+enum AuthProvider {
+  EMAIL
+  GOOGLE
+}
+
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  passwordHash  String
+  id            String       @id @default(uuid())
+  email         String       @unique
+  passwordHash  String?      // null for OAuth-only users (Google Sign-In)
   name          String?
   avatarUrl     String?
-  role          Role      @default(USER)
-  isActive      Boolean   @default(true)
-  emailVerified Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime? // soft delete
+  role          Role         @default(USER)
+  authProvider  AuthProvider @default(EMAIL)
+  firebaseUid   String?      @unique // Firebase UID, used to verify Google identity
+  isActive      Boolean      @default(true)
+  emailVerified Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  deletedAt     DateTime?    // soft delete
 
   // Relations
   refreshTokens      RefreshToken[]

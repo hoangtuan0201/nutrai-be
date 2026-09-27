@@ -11,6 +11,7 @@ import databaseConfig from './config/database.config';
 import redisConfig from './config/redis.config';
 import firebaseConfig from './config/firebase.config';
 import jwtConfig from './config/jwt.config';
+import authConfig from './config/auth.config';
 import { validateEnv } from './config/validation.schema';
 
 @Module({
@@ -18,7 +19,7 @@ import { validateEnv } from './config/validation.schema';
     ConfigModule.forRoot({
       isGlobal: true,
       expandVariables: true,
-      load: [configuration, databaseConfig, redisConfig, firebaseConfig, jwtConfig],
+      load: [configuration, databaseConfig, redisConfig, firebaseConfig, jwtConfig, authConfig],
       validate: validateEnv,
     }),
     PrismaModule,

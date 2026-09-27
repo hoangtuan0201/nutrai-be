@@ -23,6 +23,14 @@ export const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('7d'),
   JWT_REFRESH_SECRET: z.string().min(16, 'JWT_REFRESH_SECRET must be at least 16 characters'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('30d'),
+
+  // Auth behaviour
+  BCRYPT_ROUNDS: z.coerce.number().int().min(10).max(14).default(12),
+  PASSWORD_RESET_EXPIRES_MINUTES: z.coerce.number().int().positive().default(30),
+
+  // App URLs
+  APP_BASE_URL: z.string().url().default('https://app.nutraai.com'),
+  APP_RESET_PASSWORD_PATH: z.string().default('/reset-password'),
 });
 
 export type Env = z.infer<typeof envSchema>;

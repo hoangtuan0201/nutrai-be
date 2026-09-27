@@ -1,17 +1,21 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { CqrsModule } from '@nestjs/cqrs';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { FirebaseModule } from '../firebase/firebase.module';
 import { FirebaseAuthService } from '../firebase/firebase-auth.service';
 import { PrismaModule } from '../../database/prisma/prisma.module';
+import { PasswordResetRequestedHandler } from './events/password-reset-requested.handler';
+
+const EventHandlers = [PasswordResetRequestedHandler];
 
 @Module({
   imports: [
     PrismaModule,
     FirebaseModule,
-    // JwtModule configured async so it reads JWT_SECRET from ConfigService
+    CqrsModule, // provides EventBus, CommandBus, QueryBus
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -24,8 +28,7 @@ import { PrismaModule } from '../../database/prisma/prisma.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, FirebaseAuthService],
-  // Export AuthService so other modules can use token validation if needed
+  providers: [AuthService, FirebaseAuthService, ...EventHandlers],
   exports: [AuthService, JwtModule],
 })
 export class AuthModule {}

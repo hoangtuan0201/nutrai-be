@@ -9,6 +9,29 @@ async function bootstrap() {
   // Custom Validation Pipe
   app.useGlobalPipes(new CustomValidationPipe());
 
+  // Enable CORS (configured from env)
+  const corsOriginEnv = process.env.CORS_ORIGIN;
+  const isDev = process.env.NODE_ENV !== 'production';
+  const allowedOrigins = corsOriginEnv
+    ? corsOriginEnv.split(',').map((o) => o.trim())
+    : ['http://localhost:8081', 'http://localhost:19006', 'http://localhost:3000'];
+
+  app.enableCors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile native apps, curl, Postman)
+      if (!origin) return callback(null, true);
+
+      if (isDev || corsOriginEnv === '*' || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    credentials: true,
+  });
+
   // Swagger OpenAPI Setup
   const config = new DocumentBuilder()
     .setTitle('NutraAI API')

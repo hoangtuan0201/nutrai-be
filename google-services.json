@@ -12,7 +12,20 @@
           "package_name": "com.nutraai.mobile"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "86356630707-ojpbhg8ai552sphngikiffpiu3d3qgoa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.nutraai.mobile",
+            "certificate_hash": "c8fed3d70a83fa02cda84bb6d87a5d5ca52d280e"
+          }
+        },
+        {
+          "client_id": "86356630707-vtv08l3apeej61eg6kq7l329cj6iejoa.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDOHXoT4udUjudjxcVo5jSgPTzFkthv15g"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "86356630707-vtv08l3apeej61eg6kq7l329cj6iejoa.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

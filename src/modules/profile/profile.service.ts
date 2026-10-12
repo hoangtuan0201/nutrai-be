@@ -29,24 +29,20 @@ export class ProfileService {
     const metrics = this.computeMetrics(profile);
     let activeTarget = await this.repo.findActiveTarget(userId);
 
-    // Auto-migrate legacy targets or ensure activeTarget exists when profile is complete
-    if (metrics && profile.fitnessGoal && profile.weightKg) {
-      const expectedProtein = Math.round(profile.weightKg * 1.8);
-      if (!activeTarget || Math.abs(activeTarget.dailyProtein - expectedProtein) > 5) {
-        const { calorieTarget: dailyCalories, proteinG, carbsG, fatG } =
-          calculateTargets(
-            metrics.tdee,
-            profile.fitnessGoal,
-            profile.weightKg,
-            profile.gender ?? undefined,
-          );
-
-        activeTarget = await this.repo.upsertNutritionTarget(
-          userId,
-          { dailyCalories, dailyProtein: proteinG, dailyCarbs: carbsG, dailyFat: fatG },
+    if (!activeTarget && metrics && profile.fitnessGoal) {
+      const { calorieTarget: dailyCalories, proteinG, carbsG, fatG } =
+        calculateTargets(
+          metrics.tdee,
           profile.fitnessGoal,
+          profile.weightKg ?? undefined,
+          profile.gender ?? undefined,
         );
-      }
+
+      activeTarget = await this.repo.upsertNutritionTarget(
+        userId,
+        { dailyCalories, dailyProtein: proteinG, dailyCarbs: carbsG, dailyFat: fatG },
+        profile.fitnessGoal,
+      );
     }
 
     return toResponseDto(profile, metrics, activeTarget);
@@ -63,37 +59,19 @@ export class ProfileService {
     let activeTarget: NutritionTargetDto | undefined;
 
     if (metrics && profile.fitnessGoal) {
-      if (
-        dto.dailyCalories !== undefined &&
-        dto.dailyProtein !== undefined &&
-        dto.dailyCarbs !== undefined &&
-        dto.dailyFat !== undefined
-      ) {
-        activeTarget = await this.repo.upsertNutritionTarget(
-          userId,
-          {
-            dailyCalories: Math.round(dto.dailyCalories),
-            dailyProtein: Math.round(dto.dailyProtein),
-            dailyCarbs: Math.round(dto.dailyCarbs),
-            dailyFat: Math.round(dto.dailyFat),
-          },
+      const { calorieTarget: dailyCalories, proteinG, carbsG, fatG } =
+        calculateTargets(
+          metrics.tdee,
           profile.fitnessGoal,
+          profile.weightKg ?? undefined,
+          profile.gender ?? undefined,
         );
-      } else {
-        const { calorieTarget: dailyCalories, proteinG, carbsG, fatG } =
-          calculateTargets(
-            metrics.tdee,
-            profile.fitnessGoal,
-            profile.weightKg ?? undefined,
-            profile.gender ?? undefined,
-          );
 
-        activeTarget = await this.repo.upsertNutritionTarget(
-          userId,
-          { dailyCalories, dailyProtein: proteinG, dailyCarbs: carbsG, dailyFat: fatG },
-          profile.fitnessGoal,
-        );
-      }
+      activeTarget = await this.repo.upsertNutritionTarget(
+        userId,
+        { dailyCalories, dailyProtein: proteinG, dailyCarbs: carbsG, dailyFat: fatG },
+        profile.fitnessGoal,
+      );
     }
 
     this.logger.log(`Profile updated: userId=${userId}`);
@@ -117,7 +95,12 @@ export class ProfileService {
 
     const bmr  = calculateBMR(weightKg, heightCm, ageFromDob(dateOfBirth), gender);
     const tdee = calculateTDEE(bmr, activityLevel);
-    const { calorieTarget } = calculateTargets(tdee, fitnessGoal, weightKg, gender);
+    const { calorieTarget } = calculateTargets(
+      tdee,
+      fitnessGoal,
+      weightKg ?? undefined,
+      gender ?? undefined,
+    );
 
     return { bmr, tdee, calorieTarget };
   }

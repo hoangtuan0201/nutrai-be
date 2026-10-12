@@ -46,28 +46,4 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsEnum(FitnessGoal)
   fitnessGoal?: FitnessGoal;
-
-  @ApiPropertyOptional({ description: 'Target daily calories', example: 2100 })
-  @IsOptional()
-  @IsNumber()
-  @Min(800)
-  dailyCalories?: number;
-
-  @ApiPropertyOptional({ description: 'Target daily protein in grams', example: 126 })
-  @IsOptional()
-  @IsNumber()
-  @Min(20)
-  dailyProtein?: number;
-
-  @ApiPropertyOptional({ description: 'Target daily carbs in grams', example: 250 })
-  @IsOptional()
-  @IsNumber()
-  @Min(20)
-  dailyCarbs?: number;
-
-  @ApiPropertyOptional({ description: 'Target daily fat in grams', example: 63 })
-  @IsOptional()
-  @IsNumber()
-  @Min(10)
-  dailyFat?: number;
 }

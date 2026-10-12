@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { AuthRepository } from './auth.repository';
 import { FirebaseModule } from '../firebase/firebase.module';
 import { FirebaseAuthService } from '../firebase/firebase-auth.service';
 import { PrismaModule } from '../../database/prisma/prisma.module';
@@ -15,20 +16,18 @@ const EventHandlers = [PasswordResetRequestedHandler];
   imports: [
     PrismaModule,
     FirebaseModule,
-    CqrsModule, // provides EventBus, CommandBus, QueryBus
+    CqrsModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         secret: config.get<string>('jwt.secret'),
-        signOptions: {
-          expiresIn: 60 * 60 * 24 * 7, // 7 days in seconds
-        },
+        signOptions: { expiresIn: 60 * 60 * 24 * 7 },
       }),
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, FirebaseAuthService, ...EventHandlers],
+  providers: [AuthService, AuthRepository, FirebaseAuthService, ...EventHandlers],
   exports: [AuthService, JwtModule],
 })
 export class AuthModule {}

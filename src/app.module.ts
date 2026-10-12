@@ -6,6 +6,7 @@ import { PrismaModule } from './database/prisma/prisma.module';
 import { MealsModule } from './modules/meals/meals.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { FirebaseModule } from './modules/firebase/firebase.module';
+import { ProfileModule } from './modules/profile/profile.module';
 import configuration from './config/configuration';
 import databaseConfig from './config/database.config';
 import redisConfig from './config/redis.config';
@@ -26,6 +27,7 @@ import { validateEnv } from './config/validation.schema';
     FirebaseModule,
     AuthModule,
     MealsModule,
+    ProfileModule,
   ],
   controllers: [AppController],
   providers: [AppService],

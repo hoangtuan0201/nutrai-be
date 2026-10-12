@@ -67,6 +67,7 @@ export function calculateTargets(
   const calorieTarget = Math.round(Math.max(minSafe, tdee + delta));
 
   if (weightKg && weightKg > 0) {
+    // Body-weight based calculation: ~1.8 g/kg protein, ~0.9 g/kg fat, remainder carbs
     const proteinG = Math.round(weightKg * 1.8);
     const fatG = Math.round(weightKg * 0.9);
     const remainingKcal = calorieTarget - (proteinG * 4 + fatG * 9);

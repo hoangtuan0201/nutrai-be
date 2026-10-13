@@ -82,15 +82,22 @@ export class AuthRepository {
   }
 
   invalidatePendingResets(userId: string) {
-    return this.prisma.passwordReset.updateMany({
-      where: { userId, isUsed: false },
-      data: { isUsed: true },
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordResetToken: null,
+        passwordResetExpires: null,
+      },
     });
   }
 
   createPasswordReset(userId: string, token: string, expiresAt: Date) {
-    return this.prisma.passwordReset.create({
-      data: { userId, token, expiresAt },
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordResetToken: token,
+        passwordResetExpires: expiresAt,
+      },
     });
   }
 }

@@ -70,17 +70,12 @@ async function main() {
 
   // Clean all tables (order matters for FK constraints)
   console.log('🗑️  Cleaning existing data...');
-  await prisma.auditLog.deleteMany();
-  await prisma.aiUsageLog.deleteMany();
-  await prisma.reportExport.deleteMany();
   await prisma.deviceToken.deleteMany();
-  await prisma.notification.deleteMany();
-  await prisma.userSetting.deleteMany();
   await prisma.payment.deleteMany();
+  await prisma.notification.deleteMany();
   await prisma.userSubscription.deleteMany();
   await prisma.subscriptionPlan.deleteMany();
   await prisma.weightLog.deleteMany();
-  await prisma.dailyNutritionSummary.deleteMany();
   await prisma.chatMessage.deleteMany();
   await prisma.chatConversation.deleteMany();
   await prisma.aiMealAnalysis.deleteMany();
@@ -90,8 +85,6 @@ async function main() {
   await prisma.foodCategory.deleteMany();
   await prisma.nutritionTarget.deleteMany();
   await prisma.userProfile.deleteMany();
-  await prisma.passwordReset.deleteMany();
-  await prisma.emailVerification.deleteMany();
   await prisma.refreshToken.deleteMany();
   await prisma.user.deleteMany();
 
@@ -584,35 +577,9 @@ async function main() {
   });
 
   // ═══════════════════════════════════════════════════════
-  // DOMAIN 5: PROGRESS — Daily Summaries & Weight Logs
+  // DOMAIN 5: PROGRESS — Weight Logs
   // ═══════════════════════════════════════════════════════
-  console.log('📊 Creating daily summaries & weight logs...');
-
-  for (let dayOffset = 1; dayOffset <= 7; dayOffset++) {
-    const day = dateOnly(daysAgo(dayOffset));
-    const cal = randomBetween(1600, 2000);
-    const pro = randomBetween(80, 120);
-    const carb = randomBetween(180, 240);
-    const fat = randomBetween(50, 70);
-
-    await prisma.dailyNutritionSummary.create({
-      data: {
-        userId,
-        nutritionTargetId: userTargetId,
-        summaryDate: day,
-        totalCalories: cal,
-        totalProtein: pro,
-        totalCarbs: carb,
-        totalFat: fat,
-        targetCalories: 1800,
-        targetProtein: 100,
-        targetCarbs: 200,
-        targetFat: 60,
-        mealsCount: 4,
-        caloriePercentage: Math.round((cal / 1800) * 100 * 10) / 10,
-      },
-    });
-  }
+  console.log('📊 Creating weight logs...');
 
   // Weight logs for past 14 days
   for (let dayOffset = 0; dayOffset <= 14; dayOffset++) {
@@ -698,26 +665,31 @@ async function main() {
       userId: proUserId,
       planId: proMonthlyId,
       status: 'ACTIVE',
+      transactionId: `GP-${uuid().slice(0, 8)}`,
       startsAt: daysAgo(15),
       expiresAt: new Date(new Date().setDate(new Date().getDate() + 15)),
       autoRenew: true,
-      payments: {
-        create: {
-          amount: 99000,
-          currency: 'VND',
-          paymentMethod: 'GOOGLE_PLAY',
-          status: 'COMPLETED',
-          transactionId: `GP-${uuid().slice(0, 8)}`,
-          paidAt: daysAgo(15),
-        },
-      },
+    },
+  });
+
+  // Create payment record for Pro subscription
+  await prisma.payment.create({
+    data: {
+      userId: proUserId,
+      subscriptionId: subId,
+      amount: 99000,
+      currency: 'VND',
+      paymentMethod: 'GOOGLE_PLAY',
+      status: 'COMPLETED',
+      transactionId: `GP-TXN-${uuid().slice(0, 8)}`,
+      paidAt: daysAgo(15),
     },
   });
 
   // ═══════════════════════════════════════════════════════
   // DOMAIN 7: NOTIFICATIONS
   // ═══════════════════════════════════════════════════════
-  console.log('🔔 Creating notifications & device tokens...');
+  console.log('🔔 Creating notifications...');
 
   await prisma.notification.createMany({
     data: [
@@ -779,113 +751,11 @@ async function main() {
     ],
   });
 
-  // ═══════════════════════════════════════════════════════
-  // DOMAIN 9: USER SETTINGS
-  // ═══════════════════════════════════════════════════════
-  console.log('⚙️  Creating user settings...');
-
-  await prisma.userSetting.createMany({
-    data: [
-      {
-        userId,
-        unitSystem: 'METRIC',
-        language: 'en',
-        theme: 'SYSTEM',
-        notificationMealReminder: true,
-        notificationGoalAlert: true,
-        notificationAiRecommendation: true,
-        notificationPushEnabled: true,
-        reminderBreakfastMinutes: 420, // 07:00
-        reminderLunchMinutes: 720,     // 12:00
-        reminderDinnerMinutes: 1080,   // 18:00
-      },
-      {
-        userId: proUserId,
-        unitSystem: 'METRIC',
-        language: 'en',
-        theme: 'DARK',
-        notificationMealReminder: true,
-        notificationGoalAlert: true,
-        notificationAiRecommendation: true,
-        notificationPushEnabled: true,
-        reminderBreakfastMinutes: 390, // 06:30
-        reminderLunchMinutes: 690,     // 11:30
-        reminderDinnerMinutes: 1110,   // 18:30
-      },
-    ],
-  });
-
-  // ═══════════════════════════════════════════════════════
-  // DOMAIN 10: AI USAGE LOGS & AUDIT LOGS
-  // ═══════════════════════════════════════════════════════
-  console.log('📝 Creating AI usage logs & audit logs...');
-
-  for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
-    await prisma.aiUsageLog.createMany({
-      data: [
-        {
-          userId,
-          feature: 'MEAL_TEXT',
-          aiModel: 'gemini-2.0-flash',
-          inputTokens: Math.round(randomBetween(100, 300)),
-          outputTokens: Math.round(randomBetween(200, 500)),
-          latencyMs: Math.round(randomBetween(800, 2000)),
-          estimatedCost: randomBetween(0.001, 0.005),
-          status: 'SUCCESS',
-          usageDate: dateOnly(daysAgo(dayOffset)),
-        },
-        {
-          userId,
-          feature: 'CHAT',
-          aiModel: 'gemini-2.0-flash',
-          inputTokens: Math.round(randomBetween(200, 600)),
-          outputTokens: Math.round(randomBetween(300, 800)),
-          latencyMs: Math.round(randomBetween(1000, 3000)),
-          estimatedCost: randomBetween(0.002, 0.008),
-          status: 'SUCCESS',
-          usageDate: dateOnly(daysAgo(dayOffset)),
-        },
-      ],
-    });
-  }
-
-  await prisma.auditLog.createMany({
-    data: [
-      {
-        actorId: adminId,
-        action: 'CREATE',
-        entityType: 'Food',
-        entityId: foodChicken,
-        newValue: { name: 'Chicken Breast', caloriesPer100g: 165 },
-        ipAddress: '127.0.0.1',
-        userAgent: 'NutraAI-Admin/1.0',
-        createdAt: daysAgo(10),
-      },
-      {
-        actorId: adminId,
-        action: 'CREATE',
-        entityType: 'SubscriptionPlan',
-        entityId: proMonthlyId,
-        newValue: { name: 'Pro Monthly', price: 99000 },
-        ipAddress: '127.0.0.1',
-        userAgent: 'NutraAI-Admin/1.0',
-        createdAt: daysAgo(20),
-      },
-      {
-        actorId: userId,
-        action: 'LOGIN',
-        entityType: 'User',
-        entityId: userId,
-        ipAddress: '192.168.1.100',
-        userAgent: 'Expo/57.0 (Android 15)',
-        createdAt: daysAgo(0),
-      },
-    ],
-  });
-
   // ── Summary ──────────────────────────────────────────
   const counts = {
     users: await prisma.user.count(),
+    refreshTokens: await prisma.refreshToken.count(),
+    deviceTokens: await prisma.deviceToken.count(),
     profiles: await prisma.userProfile.count(),
     nutritionTargets: await prisma.nutritionTarget.count(),
     foodCategories: await prisma.foodCategory.count(),
@@ -895,16 +765,11 @@ async function main() {
     aiAnalyses: await prisma.aiMealAnalysis.count(),
     chatConversations: await prisma.chatConversation.count(),
     chatMessages: await prisma.chatMessage.count(),
-    dailySummaries: await prisma.dailyNutritionSummary.count(),
     weightLogs: await prisma.weightLog.count(),
     subscriptionPlans: await prisma.subscriptionPlan.count(),
     userSubscriptions: await prisma.userSubscription.count(),
     payments: await prisma.payment.count(),
     notifications: await prisma.notification.count(),
-    deviceTokens: await prisma.deviceToken.count(),
-    userSettings: await prisma.userSetting.count(),
-    aiUsageLogs: await prisma.aiUsageLog.count(),
-    auditLogs: await prisma.auditLog.count(),
   };
 
   console.log('\n✅ Seed completed!\n');

@@ -436,8 +436,8 @@ enum PaymentStatus {
 
 model Payment {
   id             String            @id @default(uuid())
-  userId         String
-  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String?
+  user           User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
   subscriptionId String?
   subscription   UserSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
   amount         Float

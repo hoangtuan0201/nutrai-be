@@ -1,6 +1,17 @@
-import { IsString, IsNotEmpty, IsNumber, IsOptional, IsEnum, IsArray, ValidateNested, Min, Max } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsEnum,
+  IsArray,
+  ValidateNested,
+  Min,
+  IsDateString,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { MealType, MealSource } from '@prisma/client';
 
 export class CreateMealItemDto {
   @ApiProperty({ description: 'Name of the food item', example: 'Chicken breast' })
@@ -18,10 +29,10 @@ export class CreateMealItemDto {
   @Min(0)
   quantity: number;
 
-  @ApiProperty({ description: 'Unit of measurement', example: 'serving' })
+  @ApiPropertyOptional({ description: 'Unit of measurement', example: 'serving' })
   @IsString()
-  @IsNotEmpty()
-  unit: string;
+  @IsOptional()
+  unit?: string;
 
   @ApiProperty({ description: 'Calories (kcal)', example: 250 })
   @IsNumber()
@@ -45,14 +56,14 @@ export class CreateMealItemDto {
 }
 
 export class CreateMealDto {
-  @ApiProperty({ description: 'ID of the user logging the meal' })
+  @ApiPropertyOptional({ description: 'ID of the user logging the meal (auto-injected from token)' })
   @IsString()
-  @IsNotEmpty()
-  userId: string;
+  @IsOptional()
+  userId?: string;
 
-  @ApiProperty({ description: 'Meal type', enum: ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK'], example: 'LUNCH' })
-  @IsEnum(['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK'])
-  mealType: string;
+  @ApiProperty({ description: 'Meal type', enum: MealType, example: 'LUNCH' })
+  @IsEnum(MealType)
+  mealType: MealType;
 
   @ApiPropertyOptional({ description: 'Custom name for this meal', example: 'Office lunch' })
   @IsString()
@@ -84,9 +95,15 @@ export class CreateMealDto {
   @IsOptional()
   imageUrl?: string;
 
-  @ApiProperty({ description: 'Meal source', enum: ['MANUAL', 'AI_TEXT', 'AI_IMAGE'], example: 'MANUAL' })
-  @IsEnum(['MANUAL', 'AI_TEXT', 'AI_IMAGE'])
-  source: string;
+  @ApiPropertyOptional({ description: 'Meal source', enum: MealSource, example: 'MANUAL' })
+  @IsEnum(MealSource)
+  @IsOptional()
+  source?: MealSource;
+
+  @ApiPropertyOptional({ description: 'Date of the meal (YYYY-MM-DD), defaults to today', example: '2026-10-13' })
+  @IsDateString()
+  @IsOptional()
+  loggedDate?: string;
 
   @ApiPropertyOptional({ description: 'List of food items in this meal', type: [CreateMealItemDto] })
   @IsArray()

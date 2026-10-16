@@ -31,6 +31,9 @@ export const envSchema = z.object({
   // App URLs
   APP_BASE_URL: z.string().url().default('https://app.nutraai.com'),
   APP_RESET_PASSWORD_PATH: z.string().default('/reset-password'),
+
+  // External APIs
+  USDA_API_KEY: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

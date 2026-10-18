@@ -3,9 +3,15 @@ import { AppModule } from './app.module';
 import { CustomValidationPipe } from './common/pipes/validation.pipe';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
+import { json, urlencoded } from 'express';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
+  // Support up to 25MB payloads for AI multimodal image uploads
+  app.use(json({ limit: '25mb' }));
+  app.use(urlencoded({ extended: true, limit: '25mb' }));
+
   // Custom Validation Pipe
   app.useGlobalPipes(new CustomValidationPipe());
 

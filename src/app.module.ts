@@ -8,6 +8,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { FirebaseModule } from './modules/firebase/firebase.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { FoodsModule } from './modules/foods/foods.module';
+import { AiModule } from './modules/ai/ai.module';
 import configuration from './config/configuration';
 import databaseConfig from './config/database.config';
 import redisConfig from './config/redis.config';
@@ -30,6 +31,7 @@ import { validateEnv } from './config/validation.schema';
     MealsModule,
     ProfileModule,
     FoodsModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [AppService],

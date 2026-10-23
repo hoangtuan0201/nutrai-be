@@ -47,6 +47,15 @@ export class FoodsController {
     return this.foodsService.getCategories();
   }
 
+  @Get('barcode/:barcode')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Lookup packaged food nutrition by barcode without saving to internal database' })
+  @ApiResponse({ status: 200, description: 'Food details returned from external barcode database.' })
+  @ApiResponse({ status: 404, description: 'Product not found for this barcode.' })
+  async getFoodByBarcode(@Param('barcode') barcode: string) {
+    return this.foodsService.getFoodByBarcode(barcode);
+  }
+
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get internal food item details by ID' })

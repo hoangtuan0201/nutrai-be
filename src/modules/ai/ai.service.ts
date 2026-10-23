@@ -128,27 +128,33 @@ If no food is visible in the image, return:
           })
         : [];
 
-      const totalCalories =
-        items.length > 0
-          ? items.reduce((sum, it) => sum + it.calories, 0)
-          : Number(parsed.estimatedTotalCalories) || 0;
-
-      const totalProtein =
-        Math.round(items.reduce((sum, it) => sum + it.protein, 0) * 10) / 10;
-      const totalCarbs =
-        Math.round(items.reduce((sum, it) => sum + it.carbs, 0) * 10) / 10;
-      const totalFat =
-        Math.round(items.reduce((sum, it) => sum + it.fat, 0) * 10) / 10;
+      const hasItems = items.length > 0;
+      const totalCalories = hasItems ? items.reduce((sum, it) => sum + it.calories, 0) : 0;
+      const totalProtein = hasItems
+        ? Math.round(items.reduce((sum, it) => sum + it.protein, 0) * 10) / 10
+        : 0;
+      const totalCarbs = hasItems
+        ? Math.round(items.reduce((sum, it) => sum + it.carbs, 0) * 10) / 10
+        : 0;
+      const totalFat = hasItems
+        ? Math.round(items.reduce((sum, it) => sum + it.fat, 0) * 10) / 10
+        : 0;
 
       return {
-        mealName: parsed.mealName || (items.length > 0 ? items.map((i) => i.name).slice(0, 2).join(' with ') : 'Logged Meal'),
+        mealName: hasItems
+          ? parsed.mealName || items.map((i) => i.name).slice(0, 2).join(' with ')
+          : 'No Food Detected',
         mealType: dto.mealType || 'LUNCH',
         estimatedTotalCalories: totalCalories,
         totalProtein,
         totalCarbs,
         totalFat,
-        confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.85,
-        advice: parsed.advice || 'Balanced portion size is key to consistent nutritional progress.',
+        confidence: hasItems ? (typeof parsed.confidence === 'number' ? parsed.confidence : 0.85) : 0,
+        advice:
+          parsed.advice ||
+          (hasItems
+            ? 'Balanced portion size is key to consistent nutritional progress.'
+            : 'No food detected. Please re-take the photo clearly.'),
         items,
       };
     } catch (parseErr: any) {

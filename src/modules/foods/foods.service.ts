@@ -1,11 +1,11 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { FoodsRepository } from './foods.repository';
 
 export interface StandardFoodItem {
   id?: string;
   name: string;
-  source: 'LOCAL' | 'USDA';
+  source: 'LOCAL' | 'USDA' | 'BARCODE';
   categoryName?: string;
   caloriesPer100g: number;
   proteinPer100g: number;
@@ -16,6 +16,13 @@ export interface StandardFoodItem {
   isVerified?: boolean;
   fdcId?: number;
   brand?: string;
+  barcode?: string;
+  imageUrl?: string;
+  servingSizeDescription?: string;
+  servingCalories?: number;
+  servingProtein?: number;
+  servingCarbs?: number;
+  servingFat?: number;
 }
 
 @Injectable()
@@ -199,4 +206,181 @@ export class FoodsService {
 
     return uniqueFoods;
   }
+
+  /**
+   * Lookup packaged food information by barcode without storing to internal database.
+   * Primary: Open Food Facts API v2.
+   * Fallback: Gemini AI Knowledge lookup for commercial barcode numbers.
+   */
+  async getFoodByBarcode(barcode: string): Promise<StandardFoodItem> {
+    const cleanBarcode = barcode.trim().replace(/[^0-9]/g, '');
+    if (!cleanBarcode) {
+      throw new NotFoundException('Invalid barcode format');
+    }
+
+    // 1. Tra cứu Open Food Facts API v2
+    try {
+      const offUrl = `https://world.openfoodfacts.net/api/v2/product/${cleanBarcode}?fields=product_name,product_name_vi,product_name_en,brands,nutriments,image_url,serving_size,serving_quantity`;
+      const offRes = await fetch(offUrl, {
+        headers: {
+          'User-Agent': 'NutraAI - Mobile - Version 1.0 - contact@nutraai.com',
+          Accept: 'application/json',
+        },
+      });
+
+      if (offRes.ok) {
+        const offData = await offRes.json();
+        if (offData.status === 1 && offData.product) {
+          const p = offData.product;
+          const nutriments = p.nutriments || {};
+
+          const calories100g =
+            nutriments['energy-kcal_100g'] ??
+            nutriments['energy-kcal'] ??
+            (nutriments.energy_100g ? Math.round(nutriments.energy_100g / 4.184) : 0);
+
+          const protein100g = nutriments.proteins_100g ?? nutriments.proteins ?? 0;
+          const carbs100g = nutriments.carbohydrates_100g ?? nutriments.carbohydrates ?? 0;
+          const fat100g = nutriments.fat_100g ?? nutriments.fat ?? 0;
+
+          const productName =
+            p.product_name_vi || p.product_name || p.product_name_en || 'Packaged Product';
+
+          const servingSizeDesc =
+            p.serving_size ||
+            (p.serving_quantity ? `${p.serving_quantity}g` : '1 package');
+          const servingQty = p.serving_quantity ? Number(p.serving_quantity) : 0;
+
+          let servingCal = nutriments['energy-kcal_serving']
+            ? Math.round(Number(nutriments['energy-kcal_serving']))
+            : 0;
+          let servingProt = nutriments['proteins_serving']
+            ? Math.round(Number(nutriments['proteins_serving']) * 10) / 10
+            : 0;
+          let servingCarb = nutriments['carbohydrates_serving']
+            ? Math.round(Number(nutriments['carbohydrates_serving']) * 10) / 10
+            : 0;
+          let servingFa = nutriments['fat_serving']
+            ? Math.round(Number(nutriments['fat_serving']) * 10) / 10
+            : 0;
+
+          if (!servingCal && servingQty > 0 && Number(calories100g) > 0) {
+            const factor = servingQty / 100;
+            servingCal = Math.round(Number(calories100g) * factor);
+            servingProt = Math.round(Number(protein100g) * factor * 10) / 10;
+            servingCarb = Math.round(Number(carbs100g) * factor * 10) / 10;
+            servingFa = Math.round(Number(fat100g) * factor * 10) / 10;
+          } else if (!servingCal && Number(calories100g) > 0) {
+            servingCal = Math.round(Number(calories100g));
+            servingProt = Math.round(Number(protein100g) * 10) / 10;
+            servingCarb = Math.round(Number(carbs100g) * 10) / 10;
+            servingFa = Math.round(Number(fat100g) * 10) / 10;
+          }
+
+          return {
+            name: productName.trim(),
+            brand: p.brands || undefined,
+            source: 'BARCODE',
+            barcode: cleanBarcode,
+            categoryName: 'Packaged Food',
+            caloriesPer100g: Math.round(Number(calories100g) * 10) / 10,
+            proteinPer100g: Math.round(Number(protein100g) * 10) / 10,
+            carbsPer100g: Math.round(Number(carbs100g) * 10) / 10,
+            fatPer100g: Math.round(Number(fat100g) * 10) / 10,
+            servingUnit: 'serving',
+            defaultServingSize: 1,
+            servingSizeDescription: servingSizeDesc,
+            servingCalories: servingCal,
+            servingProtein: servingProt,
+            servingCarbs: servingCarb,
+            servingFat: servingFa,
+            imageUrl: p.image_url || undefined,
+            isVerified: true,
+          };
+        }
+      }
+    } catch (offErr: any) {
+      this.logger.warn(`Open Food Facts lookup failed: ${offErr.message}`);
+    }
+
+    // 2. Dự phòng bằng Gemini AI Knowledge (Hỗ trợ hàng Việt Nam & Châu Á)
+    const geminiKey = this.configService.get<string>('GEMINI_API_SCANFOOD');
+    if (geminiKey) {
+      try {
+        const promptText = `
+The user scanned a commercial barcode: "${cleanBarcode}".
+Identify the exact commercial packaged food product (brand, item name, standard serving size description, and nutritional values per package/serving) corresponding to this EAN-13/UPC barcode number.
+If found with confidence, return valid JSON:
+{
+  "found": true,
+  "name": "Exact product name (in Vietnamese or English)",
+  "brand": "Brand manufacturer (e.g. Vinamilk, Acecook, Nestle)",
+  "servingSizeDescription": "1 gói (75g)" or "1 lon (330ml)" or "1 package",
+  "servingCalories": number,
+  "servingProtein": number,
+  "servingCarbs": number,
+  "servingFat": number,
+  "caloriesPer100g": number,
+  "proteinPer100g": number,
+  "carbsPer100g": number,
+  "fatPer100g": number
 }
+If unknown or unable to identify this barcode, return:
+{ "found": false }
+`;
+
+        const geminiRes = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${geminiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: promptText }] }],
+              generationConfig: { responseMimeType: 'application/json', temperature: 0.1 },
+            }),
+          },
+        );
+
+        if (geminiRes.ok) {
+          const geminiData = await geminiRes.json();
+          const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (rawText) {
+            const parsed = JSON.parse(rawText);
+            if (parsed.found && parsed.name) {
+              const servingCal = parsed.servingCalories ?? parsed.caloriesPer100g ?? 0;
+              const servingProt = parsed.servingProtein ?? parsed.proteinPer100g ?? 0;
+              const servingCarb = parsed.servingCarbs ?? parsed.carbsPer100g ?? 0;
+              const servingFa = parsed.servingFat ?? parsed.fatPer100g ?? 0;
+
+              return {
+                name: parsed.name,
+                brand: parsed.brand || undefined,
+                source: 'BARCODE',
+                barcode: cleanBarcode,
+                categoryName: 'Packaged Food',
+                caloriesPer100g: Math.round(Number(parsed.caloriesPer100g || servingCal) * 10) / 10,
+                proteinPer100g: Math.round(Number(parsed.proteinPer100g || servingProt) * 10) / 10,
+                carbsPer100g: Math.round(Number(parsed.carbsPer100g || servingCarb) * 10) / 10,
+                fatPer100g: Math.round(Number(parsed.fatPer100g || servingFa) * 10) / 10,
+                servingUnit: 'serving',
+                defaultServingSize: 1,
+                servingSizeDescription: parsed.servingSizeDescription || '1 package',
+                servingCalories: Math.round(Number(servingCal)),
+                servingProtein: Math.round(Number(servingProt) * 10) / 10,
+                servingCarbs: Math.round(Number(servingCarb) * 10) / 10,
+                servingFat: Math.round(Number(servingFa) * 10) / 10,
+                isVerified: false,
+              };
+            }
+          }
+        }
+      } catch (geminiErr: any) {
+        this.logger.warn(`Gemini barcode lookup failed: ${geminiErr.message}`);
+      }
+    }
+
+    throw new NotFoundException(`No food product found for barcode: ${cleanBarcode}`);
+  }
+}
+
+

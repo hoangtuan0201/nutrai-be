@@ -16,6 +16,7 @@ import firebaseConfig from './config/firebase.config';
 import jwtConfig from './config/jwt.config';
 import authConfig from './config/auth.config';
 import { validateEnv } from './config/validation.schema';
+import { CloudinaryModule } from './common/cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { validateEnv } from './config/validation.schema';
     ProfileModule,
     FoodsModule,
     AiModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

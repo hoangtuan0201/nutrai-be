@@ -8,6 +8,7 @@ import {
 import { MealsRepository } from './meals.repository';
 import { CreateMealDto } from './dto/create-meal.dto';
 import { getVietnamDayRange } from '../../common/utils/date.util';
+import { CloudinaryService } from '../../common/cloudinary/cloudinary.service';
 
 export interface DailyMealsSummary {
   date: string;
@@ -28,10 +29,27 @@ export interface DailyMealsResponse {
 export class MealsService {
   private readonly logger = new Logger(MealsService.name);
 
-  constructor(private readonly mealsRepository: MealsRepository) {}
+  constructor(
+    private readonly mealsRepository: MealsRepository,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   async createMeal(userId: string, dto: CreateMealDto) {
     this.logger.log(`Logging meal '${dto.name || dto.mealType}' for user ${userId}`);
+
+    // If imageUrl is a raw base64 string or data URI, upload it to Cloudinary
+    if (dto.imageUrl && (dto.imageUrl.startsWith('data:') || dto.imageUrl.length > 500)) {
+      try {
+        const cdnUrl = await this.cloudinaryService.uploadImage(dto.imageUrl);
+        dto.imageUrl = cdnUrl;
+        this.logger.log(`Uploaded meal image to Cloudinary: ${cdnUrl}`);
+      } catch (err: any) {
+        this.logger.warn(`Failed to upload meal image to Cloudinary: ${err.message}. Keeping fallback/omitted.`);
+        // Don't save gigantic base64 in DB if upload fails
+        dto.imageUrl = undefined;
+      }
+    }
+
     return this.mealsRepository.create(userId, dto);
   }
 

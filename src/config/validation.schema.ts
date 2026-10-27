@@ -35,6 +35,9 @@ export const envSchema = z.object({
   // External APIs
   USDA_API_KEY: z.string().optional(),
   GEMINI_API_SCANFOOD: z.string().optional(),
+  CLOUDINARY_CLOUD_NAME: z.string().optional(),
+  CLOUDINARY_API_KEY: z.string().optional(),
+  CLOUDINARY_API_SECRET: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

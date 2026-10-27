@@ -44,6 +44,12 @@ describe('MealsService', () => {
           provide: MealsRepository,
           useValue: mockRepo,
         },
+        {
+          provide: require('../../common/cloudinary/cloudinary.service').CloudinaryService,
+          useValue: {
+            uploadImage: jest.fn().mockResolvedValue('https://res.cloudinary.com/test/image/upload/sample.jpg'),
+          },
+        },
       ],
     }).compile();
 

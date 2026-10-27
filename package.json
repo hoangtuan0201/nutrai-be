@@ -18,7 +18,8 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "seed": "npx prisma db seed"
+    "seed": "npx prisma db seed",
+    "seed:foods": "ts-node -O \"{\\\"module\\\":\\\"CommonJS\\\"}\" src/database/prisma/seed-foods.ts"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} src/database/prisma/seed.ts"
@@ -38,6 +39,7 @@
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
+    "cloudinary": "^2.11.0",
     "dotenv": "^17.4.2",
     "firebase-admin": "^14.5.0",
     "jsonwebtoken": "^9.0.3",

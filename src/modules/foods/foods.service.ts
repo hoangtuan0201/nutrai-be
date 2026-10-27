@@ -68,6 +68,7 @@ export class FoodsService {
         fatPer100g: f.fatPer100g,
         servingUnit: f.servingUnit,
         defaultServingSize: f.defaultServingSize,
+        imageUrl: f.imageUrl || undefined,
         isVerified: f.isVerified,
       }));
     }
@@ -133,9 +134,11 @@ export class FoodsService {
 
   /**
    * Gọi USDA FoodData Central API và bóc tách thành chuẩn dinh dưỡng
+   * Ưu tiên dữ liệu Foundation, SR Legacy và FNDDS để đảm bảo độ chính xác
    */
   private async fetchUsdaFoods(query: string): Promise<StandardFoodItem[]> {
-    const url = `${this.usdaApiUrl}?query=${encodeURIComponent(query)}&pageSize=10&api_key=${this.usdaApiKey}`;
+    const dataTypes = encodeURIComponent('Foundation,Survey (FNDDS),SR Legacy,Branded');
+    const url = `${this.usdaApiUrl}?query=${encodeURIComponent(query)}&pageSize=15&dataType=${dataTypes}&api_key=${this.usdaApiKey}`;
     const res = await fetch(url, { headers: { Accept: 'application/json' } });
 
     if (!res.ok) {
@@ -153,20 +156,55 @@ export class FoodsService {
     for (const food of data.foods) {
       const nutrients = food.foodNutrients || [];
 
-      // Helper lấy giá trị dinh dưỡng theo ID hoặc tên
+      // 1. Lấy Energy chính xác (ưu tiên kcal, xử lý nếu nutrient là kJ)
+      let calories = 0;
+      const energyKcal = nutrients.find(
+        (n: any) =>
+          n.nutrientId === 1008 ||
+          (n.unitName?.toUpperCase() === 'KCAL' && n.nutrientName?.toLowerCase().includes('energy')),
+      );
+
+      if (energyKcal?.value != null) {
+        calories = Number(energyKcal.value);
+      } else {
+        // Kiểm tra kJ (nutrientId 1062)
+        const energyKj = nutrients.find(
+          (n: any) =>
+            n.nutrientId === 1062 ||
+            (n.unitName?.toUpperCase() === 'KJ' && n.nutrientName?.toLowerCase().includes('energy')),
+        );
+        if (energyKj?.value != null) {
+          calories = Math.round(Number(energyKj.value) / 4.184);
+        }
+      }
+
+      // 2. Lấy Protein, Fat, Carbs
       const findNutrient = (id: number, names: string[]): number => {
         const found = nutrients.find(
           (n: any) =>
             n.nutrientId === id ||
             names.some((name) => n.nutrientName?.toLowerCase().includes(name.toLowerCase())),
         );
-        return found?.value ? Number(found.value) : 0;
+        return found?.value != null ? Number(found.value) : 0;
       };
 
-      const calories = findNutrient(1008, ['energy']);
       const protein = findNutrient(1003, ['protein']);
       const fat = findNutrient(1004, ['total lipid', 'fat']);
       const carbs = findNutrient(1005, ['carbohydrate']);
+
+      // 3. Fallback: Nếu không có calories nhưng có macros, dùng công thức Atwater
+      if (calories <= 0 && (protein > 0 || carbs > 0 || fat > 0)) {
+        calories = Math.round(protein * 4 + carbs * 4 + fat * 9);
+      }
+
+      // Loại bỏ dữ liệu rác (tất cả chỉ số đều = 0 hoặc calo vô lý > 950 kcal/100g)
+      if (calories <= 0 && protein <= 0 && carbs <= 0 && fat <= 0) {
+        continue;
+      }
+      if (calories > 950) {
+        // Thường là do nhập nhầm kJ hoặc số liệu lỗi
+        continue;
+      }
 
       let rawName = (food.description || '').trim();
       if (!rawName) continue;

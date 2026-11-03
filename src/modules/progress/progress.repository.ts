@@ -14,7 +14,7 @@ export class ProgressRepository {
       }),
       this.prisma.nutritionTarget.findFirst({
         where: { userId, isActive: true },
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ effectiveFrom: 'desc' }, { createdAt: 'desc' }],
       }),
     ]);
 
@@ -98,25 +98,29 @@ export class ProgressRepository {
       dailyCarbs: number;
       dailyFat: number;
     },
-    goal: any,
+    _goal: any,
   ) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Deactivate older active targets
-    await this.prisma.nutritionTarget.updateMany({
-      where: { userId, isActive: true, effectiveFrom: { lt: today } },
-      data: { isActive: false, effectiveTo: today },
-    });
+    const { loggedDate: today } = getVietnamDayRange();
 
     const existing = await this.prisma.nutritionTarget.findFirst({
       where: { userId, effectiveFrom: today },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Deactivate all other active targets so there is only ever a single active target
+    await this.prisma.nutritionTarget.updateMany({
+      where: {
+        userId,
+        isActive: true,
+        ...(existing ? { id: { not: existing.id } } : {}),
+      },
+      data: { isActive: false, effectiveTo: today },
     });
 
     return existing
       ? this.prisma.nutritionTarget.update({
           where: { id: existing.id },
-          data: { ...payload, isActive: true },
+          data: { ...payload, isActive: true, effectiveTo: null },
         })
       : this.prisma.nutritionTarget.create({
           data: { userId, effectiveFrom: today, ...payload, isActive: true },

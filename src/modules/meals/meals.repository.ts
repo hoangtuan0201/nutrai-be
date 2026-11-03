@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma/prisma.service';
 import { CreateMealDto } from './dto/create-meal.dto';
 import { Meal, MealType, MealSource } from '@prisma/client';
-import { getVietnamDayRange } from '../../common/utils/date.util';
+import { getVietnamDayRange, getVietnamTodayString } from '../../common/utils/date.util';
 
 @Injectable()
 export class MealsRepository {
@@ -17,7 +17,26 @@ export class MealsRepository {
       throw new NotFoundException(`User with ID '${userId}' does not exist.`);
     }
 
-    const { loggedDate } = getVietnamDayRange(dto.loggedDate);
+    const { loggedDate, dateString } = getVietnamDayRange(dto.loggedDate);
+    const now = new Date();
+    let loggedAt = now;
+
+    // If logging for a different calendar date than today, align loggedAt's date to loggedDate (preserving current time-of-day in UTC+7)
+    if (dateString !== getVietnamTodayString()) {
+      const [year, month, day] = dateString.split('-').map(Number);
+      const vnNow = new Date(now.getTime() + 7 * 3600000);
+      loggedAt = new Date(
+        Date.UTC(
+          year,
+          month - 1,
+          day,
+          vnNow.getUTCHours() - 7,
+          vnNow.getUTCMinutes(),
+          vnNow.getUTCSeconds(),
+          vnNow.getUTCMilliseconds(),
+        ),
+      );
+    }
 
     return this.prisma.meal.create({
       data: {
@@ -31,7 +50,7 @@ export class MealsRepository {
         imageUrl: dto.imageUrl,
         source: (dto.source as MealSource) || MealSource.MANUAL,
         loggedDate,
-        loggedAt: new Date(),
+        loggedAt,
         items: dto.items?.length
           ? {
               create: dto.items.map((item, index) => ({
@@ -73,16 +92,13 @@ export class MealsRepository {
   async findByUserAndDate(
     userId: string,
     loggedDate: Date,
-    startUtc: Date,
-    endUtc: Date,
+    _startUtc?: Date,
+    _endUtc?: Date,
   ): Promise<Meal[]> {
     return this.prisma.meal.findMany({
       where: {
         userId,
-        OR: [
-          { loggedDate },
-          { loggedAt: { gte: startUtc, lte: endUtc } },
-        ],
+        loggedDate,
       },
       include: {
         items: {

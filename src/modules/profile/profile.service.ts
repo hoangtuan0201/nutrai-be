@@ -72,6 +72,8 @@ export class ProfileService {
         { dailyCalories, dailyProtein: proteinG, dailyCarbs: carbsG, dailyFat: fatG },
         profile.fitnessGoal,
       );
+    } else {
+      activeTarget = await this.repo.findActiveTarget(userId);
     }
 
     this.logger.log(`Profile updated: userId=${userId}`);

@@ -23,6 +23,17 @@ export function getVietnamTodayString(): string {
 }
 
 /**
+ * Retrieves the calendar date string (YYYY-MM-DD) in Asia/Ho_Chi_Minh timezone
+ * for `daysAgo` days before today (0 = today, 1 = yesterday, etc.).
+ */
+export function getVietnamDateStringDaysAgo(daysAgo = 0): string {
+  const todayStr = getVietnamTodayString();
+  const [year, month, day] = todayStr.split('-').map(Number);
+  const utcDate = new Date(Date.UTC(year, month - 1, day - daysAgo));
+  return utcDate.toISOString().split('T')[0];
+}
+
+/**
  * Validates a YYYY-MM-DD date string strictly (rejecting invalid leap dates like 2026-02-31).
  */
 export function validateDateString(dateStr: string): boolean {

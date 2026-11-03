@@ -99,3 +99,89 @@ export function ageFromDob(dob: Date): number {
   if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
   return age;
 }
+
+export interface ProfileMetricsSnapshot {
+  weightKg?: number | null;
+  heightCm?: number | null;
+  dateOfBirth?: Date | null;
+  gender?: Gender | null;
+  activityLevel?: ActivityLevel | null;
+  fitnessGoal?: FitnessGoal | null;
+}
+
+/**
+ * Recalculates daily calorie & macro targets when weight or profile metrics change.
+ * - If the user had manually customized their calorie target (differs from old formula by > 5 kcal)
+ *   and did NOT just change their fitnessGoal/activityLevel, keeps their exact custom dailyCalories
+ *   while recalculating macro grams (Protein/Fat/Carbs) for the new body weight.
+ * - Otherwise (when using formula target or when fitnessGoal/activityLevel changes), recalculates
+ *   dailyCalories and macros automatically using the Mifflin-St Jeor formula.
+ */
+export function recalculateTargetWithWeightChange(
+  oldProfile: ProfileMetricsSnapshot | null | undefined,
+  newProfile: ProfileMetricsSnapshot | null | undefined,
+  existingTarget: { dailyCalories: number } | null | undefined,
+  resetCustomRatio = false,
+): {
+  dailyCalories: number;
+  dailyProtein: number;
+  dailyCarbs: number;
+  dailyFat: number;
+} | undefined {
+  if (!newProfile?.weightKg || newProfile.weightKg <= 0) {
+    return undefined;
+  }
+
+  const newWeight = newProfile.weightKg;
+  const newGender = newProfile.gender ?? oldProfile?.gender ?? Gender.MALE;
+  const newActivity = newProfile.activityLevel ?? oldProfile?.activityLevel ?? ActivityLevel.MODERATE;
+  const newGoal = newProfile.fitnessGoal ?? oldProfile?.fitnessGoal ?? FitnessGoal.MAINTENANCE;
+  const newHeight = newProfile.heightCm || oldProfile?.heightCm || 170;
+  const newAge = newProfile.dateOfBirth
+    ? ageFromDob(newProfile.dateOfBirth)
+    : oldProfile?.dateOfBirth
+    ? ageFromDob(oldProfile.dateOfBirth)
+    : 25;
+
+  const newBmr = calculateBMR(newWeight, newHeight, newAge, newGender);
+  const newTdee = calculateTDEE(newBmr, newActivity);
+  const newFormula = calculateTargets(newTdee, newGoal, newWeight, newGender);
+
+  // Check if user had a custom manual calorie goal before this weight update
+  if (!resetCustomRatio && existingTarget && existingTarget.dailyCalories > 0) {
+    const oldWeight = oldProfile?.weightKg || newWeight;
+    const oldHeight = oldProfile?.heightCm || newHeight;
+    const oldGender = oldProfile?.gender ?? newGender;
+    const oldActivity = oldProfile?.activityLevel ?? newActivity;
+    const oldGoal = oldProfile?.fitnessGoal ?? newGoal;
+    const oldAge = oldProfile?.dateOfBirth
+      ? ageFromDob(oldProfile.dateOfBirth)
+      : newAge;
+
+    const oldBmr = calculateBMR(oldWeight, oldHeight, oldAge, oldGender);
+    const oldTdee = calculateTDEE(oldBmr, oldActivity);
+    const oldFormula = calculateTargets(oldTdee, oldGoal, oldWeight, oldGender);
+
+    if (
+      oldFormula.calorieTarget > 0 &&
+      Math.abs(existingTarget.dailyCalories - oldFormula.calorieTarget) > 5
+    ) {
+      // User manually set a custom Calorie Goal: keep their exact dailyCalories unchanged,
+      // and only recalculate macro grams for the new body weight.
+      const dailyCalories = Math.round(existingTarget.dailyCalories);
+      const dailyProtein = Math.round(newWeight * 1.8);
+      const dailyFat = Math.round(newWeight * 0.9);
+      const remainingKcal = dailyCalories - (dailyProtein * 4 + dailyFat * 9);
+      const dailyCarbs = Math.round(Math.max(30, remainingKcal / 4));
+
+      return { dailyCalories, dailyProtein, dailyCarbs, dailyFat };
+    }
+  }
+
+  return {
+    dailyCalories: newFormula.calorieTarget,
+    dailyProtein: newFormula.proteinG,
+    dailyCarbs: newFormula.carbsG,
+    dailyFat: newFormula.fatG,
+  };
+}

@@ -48,9 +48,17 @@ export class ProfileRepository {
       const { loggedDate } = getVietnamDayRange();
       const existingLog = await this.prisma.weightLog.findFirst({
         where: { userId, loggedDate },
+        orderBy: { createdAt: 'desc' },
       });
 
       if (existingLog) {
+        await this.prisma.weightLog.deleteMany({
+          where: {
+            userId,
+            loggedDate,
+            id: { not: existingLog.id },
+          },
+        });
         await this.prisma.weightLog.update({
           where: { id: existingLog.id },
           data: { weightKg: data.weightKg },

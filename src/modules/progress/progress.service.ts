@@ -6,6 +6,7 @@ import {
   getVietnamTodayString,
   getVietnamDateStringDaysAgo,
 } from '../../common/utils/date.util';
+import { recalculateTargetWithWeightChange } from '../profile/nutrition-calculator';
 
 export interface DailyMacroSummary {
   date: string;
@@ -201,7 +202,32 @@ export class ProgressService {
 
   async logWeight(userId: string, dto: LogWeightDto) {
     this.logger.log(`Logging weight ${dto.weightKg}kg for user ${userId}`);
-    return this.progressRepository.createOrUpdateWeightLog(userId, dto);
+    const { profile: oldProfile, target: existingTarget } =
+      await this.progressRepository.getUserProfileAndTarget(userId);
+
+    const logResult = await this.progressRepository.createOrUpdateWeightLog(userId, dto);
+
+    const { profile: newProfile } =
+      await this.progressRepository.getUserProfileAndTarget(userId);
+
+    if (newProfile && newProfile.weightKg !== oldProfile?.weightKg) {
+      const recalculated = recalculateTargetWithWeightChange(
+        oldProfile,
+        newProfile,
+        existingTarget,
+        false,
+      );
+
+      if (recalculated) {
+        await this.progressRepository.upsertNutritionTarget(
+          userId,
+          recalculated,
+          newProfile.fitnessGoal || 'MAINTENANCE',
+        );
+      }
+    }
+
+    return logResult;
   }
 
   async getWeightHistory(userId: string) {

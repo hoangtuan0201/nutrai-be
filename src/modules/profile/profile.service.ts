@@ -114,6 +114,7 @@ function buildUpdateData(dto: UpdateProfileDto): Record<string, unknown> {
   if (dto.gender       !== undefined) data.gender       = dto.gender;
   if (dto.heightCm     !== undefined) data.heightCm     = dto.heightCm;
   if (dto.weightKg     !== undefined) data.weightKg     = dto.weightKg;
+  if (dto.targetWeightKg !== undefined) data.targetWeightKg = dto.targetWeightKg;
   if (dto.activityLevel !== undefined) data.activityLevel = dto.activityLevel;
   if (dto.fitnessGoal  !== undefined) data.fitnessGoal  = dto.fitnessGoal;
   return data;
@@ -131,6 +132,7 @@ function toResponseDto(
     gender:       profile.gender       ?? undefined,
     heightCm:     profile.heightCm     ?? undefined,
     weightKg:     profile.weightKg     ?? undefined,
+    targetWeightKg: (profile as any).targetWeightKg ?? undefined,
     activityLevel: profile.activityLevel ?? undefined,
     fitnessGoal:  profile.fitnessGoal  ?? undefined,
     metrics,

@@ -22,6 +22,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import * as dotenv from 'dotenv';
 import * as crypto from 'crypto';
+import * as bcrypt from 'bcrypt';
 
 dotenv.config();
 
@@ -36,17 +37,10 @@ function uuid(): string {
 }
 
 /**
- * Simple password hash using Node.js built-in scrypt (no bcrypt dependency needed).
- * Format: salt:hash
+ * Standard password hash using bcrypt so AuthService.login can verify it
  */
 async function hashPassword(password: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const salt = crypto.randomBytes(16).toString('hex');
-    crypto.scrypt(password, salt, 64, (err, derivedKey) => {
-      if (err) reject(err);
-      resolve(`${salt}:${derivedKey.toString('hex')}`);
-    });
-  });
+  return bcrypt.hash(password, 10);
 }
 
 function daysAgo(n: number): Date {
@@ -93,9 +87,9 @@ async function main() {
   // ═══════════════════════════════════════════════════════
   console.log('👤 Creating users...');
 
-  const adminId = uuid();
-  const userId = uuid();
-  const proUserId = uuid();
+  const adminId = '11111111-1111-1111-1111-111111111111';
+  const userId = '22222222-2222-2222-2222-222222222222';
+  const proUserId = '33333333-3333-3333-3333-333333333333';
 
   const passwordHash = await hashPassword('Test@123');
 
@@ -149,12 +143,13 @@ async function main() {
       },
       {
         userId,
-        dateOfBirth: new Date('1995-06-20'),
+        dateOfBirth: new Date('1996-05-15'),
         gender: 'MALE',
-        heightCm: 170,
-        weightKg: 75,
-        activityLevel: 'LIGHT',
-        fitnessGoal: 'WEIGHT_LOSS',
+        heightCm: 175,
+        weightKg: 48.7,
+        targetWeightKg: 64.6,
+        activityLevel: 'MODERATE',
+        fitnessGoal: 'MUSCLE_GAIN',
       },
       {
         userId: proUserId,
@@ -162,6 +157,7 @@ async function main() {
         gender: 'FEMALE',
         heightCm: 162,
         weightKg: 55,
+        targetWeightKg: 52,
         activityLevel: 'VERY_ACTIVE',
         fitnessGoal: 'MUSCLE_GAIN',
       },
@@ -186,11 +182,11 @@ async function main() {
       {
         id: userTargetId,
         userId,
-        dailyCalories: 1800,
-        dailyProtein: 100,
-        dailyCarbs: 200,
-        dailyFat: 60,
-        effectiveFrom: daysAgo(14),
+        dailyCalories: 2200,
+        dailyProtein: 135,
+        dailyCarbs: 260,
+        dailyFat: 68,
+        effectiveFrom: daysAgo(30),
         isActive: true,
       },
       {
@@ -418,7 +414,7 @@ async function main() {
 
   const createdMealIds: string[] = [];
 
-  for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+  for (let dayOffset = 0; dayOffset < 30; dayOffset++) {
     const day = daysAgo(dayOffset);
     const mealsForDay = dayOffset === 0
       ? mealTemplates.slice(0, 2) // Today: only breakfast & lunch so far
@@ -581,14 +577,24 @@ async function main() {
   // ═══════════════════════════════════════════════════════
   console.log('📊 Creating weight logs...');
 
-  // Weight logs for past 14 days
-  for (let dayOffset = 0; dayOffset <= 14; dayOffset++) {
+  const weightLogSamples = [
+    { daysAgo: 14, weightKg: 43.5, note: 'Starting muscle building journey 💪' },
+    { daysAgo: 11, weightKg: 44.2, note: 'Appetite improving, good gym sessions' },
+    { daysAgo: 8, weightKg: 45.0, note: 'Post leg-day weigh-in' },
+    { daysAgo: 6, weightKg: 45.8, note: 'Morning fasting check' },
+    { daysAgo: 4, weightKg: 46.5, note: 'Hitting daily 2200 kcal surplus' },
+    { daysAgo: 2, weightKg: 47.4, note: 'Feeling much stronger in gym' },
+    { daysAgo: 1, weightKg: 48.1, note: 'Pre-workout weight' },
+    { daysAgo: 0, weightKg: 48.7, note: '+5.2kg gained vs Oct 14! Milestone reached 🚀' },
+  ];
+
+  for (const log of weightLogSamples) {
     await prisma.weightLog.create({
       data: {
         userId,
-        weightKg: 75 - dayOffset * 0.07 + randomBetween(-0.3, 0.3), // gradual downtrend
-        loggedDate: dateOnly(daysAgo(dayOffset)),
-        note: dayOffset === 0 ? 'Feeling lighter and energized!' : undefined,
+        weightKg: log.weightKg,
+        loggedDate: dateOnly(daysAgo(log.daysAgo)),
+        note: log.note,
       },
     });
   }

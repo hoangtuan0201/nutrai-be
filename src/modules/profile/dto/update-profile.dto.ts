@@ -37,6 +37,13 @@ export class UpdateProfileDto {
   @Max(500)
   weightKg?: number;
 
+  @ApiPropertyOptional({ description: 'Target weight in kilograms', example: 65 })
+  @IsOptional()
+  @IsNumber()
+  @Min(10)
+  @Max(500)
+  targetWeightKg?: number;
+
   @ApiPropertyOptional({ enum: ActivityLevel, example: ActivityLevel.MODERATE })
   @IsOptional()
   @IsEnum(ActivityLevel)

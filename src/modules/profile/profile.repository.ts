@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ActivityLevel, FitnessGoal, Gender } from '@prisma/client';
 import { PrismaService } from '../../database/prisma/prisma.service';
 import { NutritionTargetDto } from './dto/profile-response.dto';
@@ -11,7 +11,15 @@ export class ProfileRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   /** Ensures a UserProfile row always exists; returns it. */
-  findOrCreate(userId: string) {
+  async findOrCreate(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+    if (!user) {
+      throw new UnauthorizedException('User account no longer exists. Please sign in again.');
+    }
+
     return this.prisma.userProfile.upsert({
       where: { userId },
       update: {},
@@ -20,7 +28,15 @@ export class ProfileRepository {
   }
 
   /** Upsert a profile with only the supplied fields. */
-  upsert(userId: string, data: Record<string, unknown>) {
+  async upsert(userId: string, data: Record<string, unknown>) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+    if (!user) {
+      throw new UnauthorizedException('User account no longer exists. Please sign in again.');
+    }
+
     return this.prisma.userProfile.upsert({
       where: { userId },
       update: data,

@@ -24,7 +24,7 @@ export class ProgressRepository {
   async getWeightLogs(userId: string, limit = 30) {
     return this.prisma.weightLog.findMany({
       where: { userId },
-      orderBy: { loggedDate: 'desc' },
+      orderBy: [{ loggedDate: 'desc' }, { createdAt: 'desc' }],
       take: limit,
     });
   }
@@ -37,10 +37,19 @@ export class ProgressRepository {
         userId,
         loggedDate,
       },
+      orderBy: { createdAt: 'desc' },
     });
 
     let result;
     if (existing) {
+      // Remove any accidental duplicate logs on the same date
+      await this.prisma.weightLog.deleteMany({
+        where: {
+          userId,
+          loggedDate,
+          id: { not: existing.id },
+        },
+      });
       result = await this.prisma.weightLog.update({
         where: { id: existing.id },
         data: {
@@ -62,7 +71,7 @@ export class ProgressRepository {
     // Always keep UserProfile.weightKg synced with the latest chronological weight log
     const latest = await this.prisma.weightLog.findFirst({
       where: { userId },
-      orderBy: { loggedDate: 'desc' },
+      orderBy: [{ loggedDate: 'desc' }, { createdAt: 'desc' }],
     });
     if (latest) {
       await this.prisma.userProfile.updateMany({

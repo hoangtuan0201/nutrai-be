@@ -12,6 +12,7 @@ import {
   calculateBMR,
   calculateTDEE,
   calculateTargets,
+  recalculateTargetWithWeightChange,
 } from './nutrition-calculator';
 
 @Injectable()
@@ -53,27 +54,32 @@ export class ProfileService {
   // ═══════════════════════════════════════════════════════════════
 
   async updateProfile(userId: string, dto: UpdateProfileDto): Promise<ProfileResponseDto> {
+    const oldProfile = await this.repo.findOrCreate(userId);
+    const existingTarget = await this.repo.findActiveTarget(userId);
     const profile = await this.repo.upsert(userId, buildUpdateData(dto));
 
     const metrics = this.computeMetrics(profile);
     let activeTarget: NutritionTargetDto | undefined;
 
-    if (metrics && profile.fitnessGoal) {
-      const { calorieTarget: dailyCalories, proteinG, carbsG, fatG } =
-        calculateTargets(
-          metrics.tdee,
-          profile.fitnessGoal,
-          profile.weightKg ?? undefined,
-          profile.gender ?? undefined,
-        );
+    const goalOrActivityChanged =
+      (dto.fitnessGoal !== undefined && dto.fitnessGoal !== oldProfile.fitnessGoal) ||
+      (dto.activityLevel !== undefined && dto.activityLevel !== oldProfile.activityLevel);
 
+    const recalculated = recalculateTargetWithWeightChange(
+      oldProfile,
+      profile,
+      existingTarget,
+      goalOrActivityChanged,
+    );
+
+    if (recalculated) {
       activeTarget = await this.repo.upsertNutritionTarget(
         userId,
-        { dailyCalories, dailyProtein: proteinG, dailyCarbs: carbsG, dailyFat: fatG },
-        profile.fitnessGoal,
+        recalculated,
+        profile.fitnessGoal ?? FitnessGoal.MAINTENANCE,
       );
     } else {
-      activeTarget = await this.repo.findActiveTarget(userId);
+      activeTarget = existingTarget;
     }
 
     this.logger.log(`Profile updated: userId=${userId}`);

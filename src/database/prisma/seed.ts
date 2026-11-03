@@ -44,14 +44,26 @@ async function hashPassword(password: string): Promise<string> {
 }
 
 function daysAgo(n: number): Date {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  d.setHours(0, 0, 0, 0);
-  return d;
+  const todayStr = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+  const [year, month, day] = todayStr.split('-').map(Number);
+  // 00:00:00 at Asia/Ho_Chi_Minh (UTC+7)
+  return new Date(Date.UTC(year, month - 1, day - n, -7, 0, 0, 0));
 }
 
 function dateOnly(d: Date): Date {
-  return new Date(d.toISOString().split('T')[0]);
+  const dateStr = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(d);
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
 }
 
 function randomBetween(min: number, max: number): number {

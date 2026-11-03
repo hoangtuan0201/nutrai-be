@@ -1,7 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ProgressRepository } from './progress.repository';
 import { LogWeightDto } from './dto/log-weight.dto';
-import { getVietnamDayRange } from '../../common/utils/date.util';
+import {
+  getVietnamDayRange,
+  getVietnamTodayString,
+  getVietnamDateStringDaysAgo,
+} from '../../common/utils/date.util';
 
 export interface DailyMacroSummary {
   date: string;
@@ -94,12 +98,7 @@ export class ProgressService {
     // If no weight logs recorded yet, add current weight as initial point
     if (weightHistory.length === 0) {
       const now = new Date();
-      const todayStr = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Asia/Ho_Chi_Minh',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      }).format(now);
+      const todayStr = getVietnamTodayString();
       weightHistory.push({
         date: todayStr,
         dateTime: now.toISOString(),
@@ -111,13 +110,12 @@ export class ProgressService {
     const startWeight = weightHistory[weightHistory.length - 1]?.weightKg || currentWeight;
     const weightChange = Math.round((currentWeight - startWeight) * 10) / 10;
 
-    // Daily Macro history for the requested number of days (e.g. past 7 days)
-    const today = new Date();
-    const startDate = new Date();
-    startDate.setDate(today.getDate() - (days - 1));
+    // Daily Macro history for the requested number of days in Asia/Ho_Chi_Minh timezone
+    const startDateStr = getVietnamDateStringDaysAgo(days - 1);
+    const endDateStr = getVietnamTodayString();
 
-    const { loggedDate: startLoggedDate } = getVietnamDayRange(startDate.toISOString().split('T')[0]);
-    const { loggedDate: endLoggedDate } = getVietnamDayRange(today.toISOString().split('T')[0]);
+    const { loggedDate: startLoggedDate } = getVietnamDayRange(startDateStr);
+    const { loggedDate: endLoggedDate } = getVietnamDayRange(endDateStr);
 
     const meals = await this.progressRepository.getMealsInRange(userId, startLoggedDate, endLoggedDate);
 
@@ -136,14 +134,7 @@ export class ProgressService {
     let daysWithLogs = 0;
 
     for (let i = days - 1; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(today.getDate() - i);
-      const dateKey = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Asia/Ho_Chi_Minh',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      }).format(d);
+      const dateKey = getVietnamDateStringDaysAgo(i);
 
       const dayMeals = mealsByDate.get(dateKey) || [];
       const dayCals = Math.round(dayMeals.reduce((acc, m) => acc + m.totalCalories, 0));

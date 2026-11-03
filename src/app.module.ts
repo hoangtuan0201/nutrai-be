@@ -17,6 +17,7 @@ import jwtConfig from './config/jwt.config';
 import authConfig from './config/auth.config';
 import { validateEnv } from './config/validation.schema';
 import { CloudinaryModule } from './common/cloudinary/cloudinary.module';
+import { ProgressModule } from './modules/progress/progress.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { CloudinaryModule } from './common/cloudinary/cloudinary.module';
     FoodsModule,
     AiModule,
     CloudinaryModule,
+    ProgressModule,
   ],
   controllers: [AppController],
   providers: [AppService],

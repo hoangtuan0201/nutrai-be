@@ -28,6 +28,7 @@ export class ProfileResponseDto {
   @ApiPropertyOptional({ enum: Gender }) gender?: Gender;
   @ApiPropertyOptional() heightCm?: number;
   @ApiPropertyOptional() weightKg?: number;
+  @ApiPropertyOptional() targetWeightKg?: number;
   @ApiPropertyOptional({ enum: ActivityLevel }) activityLevel?: ActivityLevel;
   @ApiPropertyOptional({ enum: FitnessGoal }) fitnessGoal?: FitnessGoal;
 

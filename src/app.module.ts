@@ -9,6 +9,7 @@ import { FirebaseModule } from './modules/firebase/firebase.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { FoodsModule } from './modules/foods/foods.module';
 import { AiModule } from './modules/ai/ai.module';
+import { AiAssistantModule } from './modules/ai-assistant/ai-assistant.module';
 import configuration from './config/configuration';
 import databaseConfig from './config/database.config';
 import redisConfig from './config/redis.config';
@@ -34,6 +35,7 @@ import { ProgressModule } from './modules/progress/progress.module';
     ProfileModule,
     FoodsModule,
     AiModule,
+    AiAssistantModule,
     CloudinaryModule,
     ProgressModule,
   ],

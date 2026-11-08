@@ -29,5 +29,6 @@ export class AuthResponseDto {
     email: string;
     name: string | null;
     role: string;
+    avatarUrl?: string | null;
   };
 }

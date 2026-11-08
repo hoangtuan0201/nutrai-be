@@ -19,6 +19,7 @@ import authConfig from './config/auth.config';
 import { validateEnv } from './config/validation.schema';
 import { CloudinaryModule } from './common/cloudinary/cloudinary.module';
 import { ProgressModule } from './modules/progress/progress.module';
+import { AccountModule } from './modules/account/account.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ProgressModule } from './modules/progress/progress.module';
     AiAssistantModule,
     CloudinaryModule,
     ProgressModule,
+    AccountModule,
   ],
   controllers: [AppController],
   providers: [AppService],

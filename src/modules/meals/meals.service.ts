@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { MealsRepository } from './meals.repository';
 import { CreateMealDto } from './dto/create-meal.dto';
+import { UpdateMealDto } from './dto/update-meal.dto';
 import { getVietnamDayRange } from '../../common/utils/date.util';
 import { CloudinaryService } from '../../common/cloudinary/cloudinary.service';
 
@@ -114,6 +115,11 @@ export class MealsService {
       throw new ForbiddenException('You do not have permission to view this meal.');
     }
     return meal;
+  }
+
+  async updateMeal(userId: string, mealId: string, dto: UpdateMealDto) {
+    const meal = await this.getMealById(userId, mealId);
+    return this.mealsRepository.update(meal.id, dto);
   }
 
   async deleteMeal(userId: string, mealId: string) {

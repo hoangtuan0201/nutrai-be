@@ -145,6 +145,6 @@ export class AuthService {
 
 // ─── Module-level helper ─────────────────────────────────────────────────────
 
-function toUserDto(user: { id: string; email: string; name: string | null; role: string }) {
-  return { id: user.id, email: user.email, name: user.name, role: user.role };
+function toUserDto(user: { id: string; email: string; name: string | null; role: string; avatarUrl?: string | null }) {
+  return { id: user.id, email: user.email, name: user.name, role: user.role, avatarUrl: user.avatarUrl ?? null };
 }

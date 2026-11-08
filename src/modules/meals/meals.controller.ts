@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Put,
   Delete,
   Body,
   Param,
@@ -22,6 +23,7 @@ import {
 } from '@nestjs/swagger';
 import { MealsService } from './meals.service';
 import { CreateMealDto } from './dto/create-meal.dto';
+import { UpdateMealDto } from './dto/update-meal.dto';
 import { GetDailyMealsQueryDto } from './dto/get-daily-meals-query.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -97,6 +99,22 @@ export class MealsController {
   ) {
     if (!user?.id) throw new UnauthorizedException('User not authenticated');
     return this.mealsService.getMealById(user.id, id);
+  }
+
+  @Put(':id')
+  @HttpCode(HttpStatus.OK)
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  @ApiOperation({ summary: 'Update an existing meal log by ID' })
+  @ApiResponse({ status: 200, description: 'Meal successfully updated.' })
+  @ApiResponse({ status: 400, description: 'Invalid input data.' })
+  @ApiResponse({ status: 404, description: 'Meal not found.' })
+  async updateMeal(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Body() dto: UpdateMealDto,
+  ) {
+    if (!user?.id) throw new UnauthorizedException('User not authenticated');
+    return this.mealsService.updateMeal(user.id, id, dto);
   }
 
   @Delete(':id')

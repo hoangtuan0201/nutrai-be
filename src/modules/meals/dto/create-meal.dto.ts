@@ -14,6 +14,11 @@ import { Type } from 'class-transformer';
 import { MealType, MealSource } from '@prisma/client';
 
 export class CreateMealItemDto {
+  @ApiPropertyOptional({ description: 'ID of the food in database', example: 'uuid' })
+  @IsString()
+  @IsOptional()
+  foodId?: string;
+
   @ApiProperty({ description: 'Name of the food item', example: 'Chicken breast' })
   @IsString()
   @IsNotEmpty()

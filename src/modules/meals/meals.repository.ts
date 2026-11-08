@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma/prisma.service';
 import { CreateMealDto } from './dto/create-meal.dto';
+import { UpdateMealDto } from './dto/update-meal.dto';
 import { Meal, MealType, MealSource } from '@prisma/client';
 import { getVietnamDayRange, getVietnamTodayString } from '../../common/utils/date.util';
 
@@ -54,6 +55,7 @@ export class MealsRepository {
         items: dto.items?.length
           ? {
               create: dto.items.map((item, index) => ({
+                foodId: item.foodId || undefined,
                 foodName: item.foodName,
                 portionDescription: item.portionDescription,
                 quantity: item.quantity,
@@ -69,6 +71,15 @@ export class MealsRepository {
       },
       include: {
         items: {
+          include: {
+            food: {
+              select: {
+                id: true,
+                name: true,
+                imageUrl: true,
+              },
+            },
+          },
           orderBy: { sortOrder: 'asc' },
         },
       },
@@ -116,9 +127,96 @@ export class MealsRepository {
       where: { id },
       include: {
         items: {
+          include: {
+            food: {
+              select: {
+                id: true,
+                name: true,
+                imageUrl: true,
+              },
+            },
+          },
           orderBy: { sortOrder: 'asc' },
         },
       },
+    });
+  }
+
+  async update(id: string, dto: UpdateMealDto): Promise<Meal> {
+    return this.prisma.$transaction(async (tx) => {
+      let totalCalories = dto.totalCalories;
+      let totalProtein = dto.totalProtein;
+      let totalCarbs = dto.totalCarbs;
+      let totalFat = dto.totalFat;
+
+      if (dto.items !== undefined) {
+        // Remove existing items and replace with updated ones
+        await tx.mealItem.deleteMany({
+          where: { mealId: id },
+        });
+
+        if (dto.items.length > 0) {
+          await tx.mealItem.createMany({
+            data: dto.items.map((item, index) => ({
+              mealId: id,
+              foodName: item.foodName,
+              portionDescription: item.portionDescription,
+              quantity: item.quantity,
+              unit: item.unit || 'serving',
+              calories: Math.round(item.calories),
+              protein: Math.round(item.protein * 10) / 10,
+              carbs: Math.round(item.carbs * 10) / 10,
+              fat: Math.round(item.fat * 10) / 10,
+              sortOrder: index,
+            })),
+          });
+
+          if (totalCalories === undefined) {
+            totalCalories = Math.round(dto.items.reduce((sum, it) => sum + it.calories, 0));
+          }
+          if (totalProtein === undefined) {
+            totalProtein = Math.round(dto.items.reduce((sum, it) => sum + it.protein, 0) * 10) / 10;
+          }
+          if (totalCarbs === undefined) {
+            totalCarbs = Math.round(dto.items.reduce((sum, it) => sum + it.carbs, 0) * 10) / 10;
+          }
+          if (totalFat === undefined) {
+            totalFat = Math.round(dto.items.reduce((sum, it) => sum + it.fat, 0) * 10) / 10;
+          }
+        } else {
+          totalCalories = totalCalories ?? 0;
+          totalProtein = totalProtein ?? 0;
+          totalCarbs = totalCarbs ?? 0;
+          totalFat = totalFat ?? 0;
+        }
+      }
+
+      return tx.meal.update({
+        where: { id },
+        data: {
+          name: dto.name,
+          mealType: dto.mealType,
+          totalCalories,
+          totalProtein,
+          totalCarbs,
+          totalFat,
+          imageUrl: dto.imageUrl,
+        },
+        include: {
+          items: {
+            include: {
+              food: {
+                select: {
+                  id: true,
+                  name: true,
+                  imageUrl: true,
+                },
+              },
+            },
+            orderBy: { sortOrder: 'asc' },
+          },
+        },
+      });
     });
   }
 

@@ -20,6 +20,7 @@ import { validateEnv } from './config/validation.schema';
 import { CloudinaryModule } from './common/cloudinary/cloudinary.module';
 import { ProgressModule } from './modules/progress/progress.module';
 import { AccountModule } from './modules/account/account.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { AccountModule } from './modules/account/account.module';
     CloudinaryModule,
     ProgressModule,
     AccountModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

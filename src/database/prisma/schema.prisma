@@ -38,9 +38,7 @@ model User {
   isActive                 Boolean      @default(true)
   emailVerified            Boolean      @default(false)
 
-  // Token xác thực & Đặt lại mật khẩu trực tiếp trong User
-  emailVerificationToken   String?      @unique
-  emailVerificationExpires DateTime?
+  // Token đặt lại mật khẩu trực tiếp trong User
   passwordResetToken       String?      @unique
   passwordResetExpires     DateTime?
 
@@ -102,17 +100,6 @@ enum FitnessGoal {
   MUSCLE_GAIN
 }
 
-enum UnitSystem {
-  METRIC
-  IMPERIAL
-}
-
-enum Theme {
-  LIGHT
-  DARK
-  SYSTEM
-}
-
 model UserProfile {
   id                           String        @id @default(uuid())
   userId                       String        @unique
@@ -125,13 +112,9 @@ model UserProfile {
   activityLevel                ActivityLevel?
   fitnessGoal                  FitnessGoal?
 
-  // Cài đặt ứng dụng tích hợp trong Profile
-  unitSystem                   UnitSystem    @default(METRIC)
-  language                     String        @default("vi")
-  theme                        Theme         @default(SYSTEM)
+  // Cài đặt nhắc nhở bữa ăn tích hợp trong Profile
   notificationMealReminder     Boolean       @default(true)
-  notificationGoalAlert        Boolean       @default(true)
-  notificationAiRecommendation Boolean       @default(true)
+  timezone                     String        @default("Asia/Ho_Chi_Minh")
   reminderBreakfastMinutes     Int?          @default(480)  // 08:00
   reminderLunchMinutes         Int?          @default(720)  // 12:00
   reminderDinnerMinutes        Int?          @default(1080) // 18:00

@@ -12,7 +12,6 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
  * POST   /account/avatar       — upload avatar to Cloudinary
  * GET    /account/preferences  — notification preferences
  * PATCH  /account/preferences  — update notification preferences
- * GET    /account/export       — export all personal data (JSON)
  * DELETE /account              — deactivate account (soft delete)
  */
 @ApiTags('Account')
@@ -44,12 +43,6 @@ export class AccountController {
   @ApiOperation({ summary: 'Update notification preferences' })
   updatePreferences(@CurrentUser() user: AuthUser, @Body() dto: UpdatePreferencesDto) {
     return this.accountService.updatePreferences(user.id, dto);
-  }
-
-  @Get('export')
-  @ApiOperation({ summary: 'Export all personal data' })
-  exportData(@CurrentUser() user: AuthUser) {
-    return this.accountService.exportData(user.id);
   }
 
   @Delete()

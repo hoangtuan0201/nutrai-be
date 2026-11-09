@@ -4,8 +4,7 @@ import { UpdatePreferencesDto } from './dto/update-preferences.dto';
 
 const PREFERENCE_SELECT = {
   notificationMealReminder: true,
-  notificationGoalAlert: true,
-  notificationAiRecommendation: true,
+  timezone: true,
   reminderBreakfastMinutes: true,
   reminderLunchMinutes: true,
   reminderDinnerMinutes: true,
@@ -48,21 +47,6 @@ export class AccountRepository {
       create: { userId, ...dto },
       select: PREFERENCE_SELECT,
     });
-  }
-
-  async exportAll(userId: string) {
-    const [user, profile, targets, meals, weightLogs] = await Promise.all([
-      this.findUser(userId),
-      this.prisma.userProfile.findUnique({ where: { userId } }),
-      this.prisma.nutritionTarget.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } }),
-      this.prisma.meal.findMany({
-        where: { userId },
-        include: { items: true },
-        orderBy: { loggedAt: 'desc' },
-      }),
-      this.prisma.weightLog.findMany({ where: { userId }, orderBy: { loggedDate: 'desc' } }),
-    ]);
-    return { user, profile, nutritionTargets: targets, meals, weightLogs };
   }
 
   /** Soft delete: deactivate account and revoke all sessions. */

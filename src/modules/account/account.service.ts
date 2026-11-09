@@ -35,11 +35,6 @@ export class AccountService {
     return this.repo.updatePreferences(userId, dto);
   }
 
-  async exportData(userId: string) {
-    const data = await this.repo.exportAll(userId);
-    return { exportedAt: new Date().toISOString(), ...data };
-  }
-
   async deleteAccount(userId: string) {
     await this.repo.softDelete(userId);
     this.logger.warn(`Account deactivated: userId=${userId}`);

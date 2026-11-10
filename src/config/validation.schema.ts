@@ -38,6 +38,18 @@ export const envSchema = z.object({
   CLOUDINARY_CLOUD_NAME: z.string().optional(),
   CLOUDINARY_API_KEY: z.string().optional(),
   CLOUDINARY_API_SECRET: z.string().optional(),
+
+  // Payment Gateways (SePay & Stripe)
+  SEPAY_ACCESS_TOKEN: z.string().optional(),
+  SEPAY_API_BASE_URL: z.string().default('https://userapi-sandbox.sepay.vn/v2'),
+  SEPAY_BANK_ACCOUNT: z.string().default('0899223595'),
+  SEPAY_BANK_NAME: z.string().default('MBBank'),
+  SEPAY_ACCOUNT_HOLDER: z.string().default('TRAN HUU HOANG TUAN'),
+  SEPAY_WEBHOOK_API_KEY: z.string().optional(),
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  STRIPE_SUCCESS_URL: z.string().optional(),
+  STRIPE_CANCEL_URL: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -21,6 +21,7 @@ import { CloudinaryModule } from './common/cloudinary/cloudinary.module';
 import { ProgressModule } from './modules/progress/progress.module';
 import { AccountModule } from './modules/account/account.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     ProgressModule,
     AccountModule,
     NotificationsModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

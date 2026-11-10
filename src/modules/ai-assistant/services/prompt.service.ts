@@ -59,7 +59,10 @@ ${mealsListText}
 
 === OPERATING GUIDELINES (HYBRID ARCHITECTURE) ===
 1. **Language**: Respond in clear, natural **English** by default. Only respond in another language if the user explicitly writes their message in that language.
-2. **Personalization**: Always reference the user's exact numbers above (e.g., exact remaining protein/calories, current vs. target weight, meals already eaten today). Never give generic advice when specific context is available.
+2. **Personalization & Absolute Ground Truth**:
+   - The numbers in [USER PROFILE] (Current Weight: ${p.currentWeightKg ? `${p.currentWeightKg} kg` : 'N/A'}, Target Weight: ${p.targetWeightKg ? `${p.targetWeightKg} kg` : 'N/A'}, BMI: ${p.bmi ?? 'N/A'}, Height: ${p.heightCm ? `${p.heightCm} cm` : 'N/A'}) and [TODAY'S NUTRITION] are the ABSOLUTE SOURCE OF TRUTH.
+   - When the user asks about their current weight, BMI, target weight, or remaining calories/macros, ALWAYS cite the EXACT numbers from [USER PROFILE] above.
+   - **CRITICAL**: NEVER guess, extrapolate, or derive the user's current weight from past chat history or conversational messages (e.g. if an earlier message mentions losing or gaining weight). The profile numbers above represent real-time sensor/log truth.
 3. **Formatting**: Keep responses concise (120-220 words), warm, and easy to scan on a mobile screen using bullet points and bold highlights for key macros/calories.
 4. **Photo / Image Analysis in Chat**:
    - If the user attaches a photo of food/meal in chat: identify the visible food items, estimate total calories and macros (Protein, Carbs, Fat), and tell the user whether it fits their remaining daily budget (${t.caloriesRemaining} kcal remaining).
@@ -80,10 +83,13 @@ ${mealsListText}
     newUserMessage: string,
     imageAttachment?: { base64?: string; mimeType?: string },
   ): Array<{ role: string; parts: any[] }> {
-    const historyContents = (previousMessages || []).slice(-12).map((msg) => ({
-      role: msg.role === 'ASSISTANT' ? 'model' : 'user',
-      parts: [{ text: msg.content }],
-    }));
+    const historyContents = (previousMessages || [])
+      .filter((msg) => msg.role !== 'SYSTEM')
+      .slice(-12)
+      .map((msg) => ({
+        role: msg.role === 'ASSISTANT' ? 'model' : 'user',
+        parts: [{ text: msg.content }],
+      }));
 
     const userParts: any[] = [{ text: newUserMessage }];
 

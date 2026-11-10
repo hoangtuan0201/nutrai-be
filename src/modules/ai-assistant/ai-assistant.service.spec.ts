@@ -6,6 +6,7 @@ import { ContextService } from './services/context.service';
 import { PromptService } from './services/prompt.service';
 import { LlmService } from './services/llm.service';
 import { FullAiContextSnapshot } from './interfaces/ai-assistant.interface';
+import { AiQuotaService } from '../ai/ai-quota.service';
 
 describe('AiAssistantService', () => {
   let service: AiAssistantService;
@@ -124,6 +125,16 @@ describe('AiAssistantService', () => {
       }),
     };
 
+    const mockAiQuota = {
+      assertCanChat: jest.fn().mockResolvedValue(undefined),
+      getUserDailyQuota: jest.fn().mockResolvedValue({
+        isPro: false,
+        planName: 'Free',
+        chats: { used: 1, limit: 5, remaining: 4 },
+        scans: { used: 0, limit: 3, remaining: 3 },
+      }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AiAssistantService,
@@ -139,6 +150,10 @@ describe('AiAssistantService', () => {
         {
           provide: LlmService,
           useValue: mockLlm,
+        },
+        {
+          provide: AiQuotaService,
+          useValue: mockAiQuota,
         },
       ],
     }).compile();

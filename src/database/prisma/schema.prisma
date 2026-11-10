@@ -369,6 +369,7 @@ model SubscriptionPlan {
   updatedAt     DateTime           @updatedAt
 
   subscriptions UserSubscription[]
+  payments      Payment[]
 
   @@map("subscription_plans")
 }
@@ -391,8 +392,6 @@ model UserSubscription {
   transactionId   String?            @unique
   startsAt        DateTime
   expiresAt       DateTime
-  cancelledAt     DateTime?
-  autoRenew       Boolean            @default(true)
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 
@@ -408,6 +407,8 @@ enum PaymentMethod {
   STRIPE
   VNPAY
   MOMO
+  BANK_TRANSFER
+  SEPAY
 }
 
 enum PaymentStatus {
@@ -415,12 +416,15 @@ enum PaymentStatus {
   COMPLETED
   FAILED
   REFUNDED
+  EXPIRED
 }
 
 model Payment {
   id             String            @id @default(uuid())
   userId         String?
   user           User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId         String?
+  plan           SubscriptionPlan? @relation(fields: [planId], references: [id], onDelete: SetNull)
   subscriptionId String?
   subscription   UserSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
   amount         Float
@@ -428,13 +432,38 @@ model Payment {
   paymentMethod  PaymentMethod
   status         PaymentStatus
   transactionId  String            @unique
+  paymentCode    String?           @unique
+  providerTxId   String?           @unique
   receiptData    String?
+  expiresAt      DateTime?
   paidAt         DateTime?
   createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @default(now()) @updatedAt
+
+  events         PaymentEvent[]
 
   @@index([userId])
   @@index([subscriptionId])
+  @@index([paymentCode])
   @@map("payments")
+}
+
+model PaymentEvent {
+  id           String   @id @default(uuid())
+  paymentId    String?
+  payment      Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  provider     String
+  eventId      String   @unique
+  eventType    String
+  payload      Json
+  status       String   @default("PROCESSED")
+  errorMessage String?
+  processedAt  DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  @@index([paymentId])
+  @@index([provider, eventId])
+  @@map("payment_events")
 }
 
 // ═══════════════════════════════════════════════════════════════

@@ -3,6 +3,7 @@ import { AiAssistantRepository } from './ai-assistant.repository';
 import { ContextService } from './services/context.service';
 import { PromptService } from './services/prompt.service';
 import { LlmService } from './services/llm.service';
+import { AiQuotaService } from '../ai/ai-quota.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import {
@@ -20,6 +21,7 @@ export class AiAssistantService {
     private readonly contextService: ContextService,
     private readonly promptService: PromptService,
     private readonly llmService: LlmService,
+    private readonly aiQuotaService: AiQuotaService,
   ) {}
 
   /**
@@ -95,6 +97,9 @@ export class AiAssistantService {
    * 4. AiAssistantRepository persists USER + ASSISTANT messages and contextSnapshot.
    */
   async sendChatMessage(userId: string, dto: SendMessageDto): Promise<SendChatResponse> {
+    // 0. Enforce daily chat quota: Free: 5/day, Pro: 50/day
+    await this.aiQuotaService.assertCanChat(userId);
+
     const startTime = Date.now();
     const userText = dto.message.trim();
 
@@ -161,12 +166,15 @@ export class AiAssistantService {
       latencyMs,
     });
 
+    const updatedQuota = await this.aiQuotaService.getUserDailyQuota(userId);
+
     return {
       conversationId: conversation.id,
       userMessage: saved.userMessage,
       assistantMessage: saved.assistantMessage,
       todayNutrition: finalContext.todayNutrition,
       contextUpdated,
+      quota: updatedQuota.chats,
     };
   }
 }

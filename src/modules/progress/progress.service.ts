@@ -160,17 +160,8 @@ export class ProgressService {
 
     const averageCalories = daysWithLogs > 0 ? Math.round(totalCalsSum / daysWithLogs) : 0;
 
-    // Calculate logging streak (consecutive days with at least 1 meal logged ending today or yesterday)
-    let currentStreakDays = 0;
-    for (let i = intakeHistory.length - 1; i >= 0; i--) {
-      if (intakeHistory[i].mealCount > 0) {
-        currentStreakDays++;
-      } else {
-        // If today has 0 meals yet, allow yesterday to count for streak
-        if (i === intakeHistory.length - 1) continue;
-        break;
-      }
-    }
+    // Calculate consecutive logging streak with early termination (blazingly fast & uncapped)
+    const currentStreakDays = await this.calculateConsecutiveStreak(userId);
 
     return {
       bmi: {
@@ -264,5 +255,47 @@ export class ProgressService {
       dailyFat: target.dailyFat,
       effectiveFrom: target.effectiveFrom.toISOString().split('T')[0],
     };
+  }
+
+  /**
+   * Calculates uninterrupted consecutive logging streak ending today or yesterday.
+   * Optimized with distinct dates and early termination (no 365-day cap, zero memory bloat).
+   */
+  async calculateConsecutiveStreak(userId: string): Promise<number> {
+    const todayStr = getVietnamTodayString();
+    const { loggedDate: todayDate } = getVietnamDayRange(todayStr);
+
+    // Only query dates up to today (ignoring future planned meals so streak isn't corrupted)
+    const distinctDates = await this.progressRepository.getDistinctMealDates(userId, todayDate);
+    if (!distinctDates || distinctDates.length === 0) return 0;
+
+    const yesterdayStr = getVietnamDateStringDaysAgo(1);
+
+    const latestDateStr = new Date(distinctDates[0].loggedDate).toISOString().split('T')[0];
+
+    // If latest logged date is neither today nor yesterday, the streak is broken (0)
+    let expectedDateStr: string;
+    if (latestDateStr === todayStr) {
+      expectedDateStr = todayStr;
+    } else if (latestDateStr === yesterdayStr) {
+      expectedDateStr = yesterdayStr;
+    } else {
+      return 0;
+    }
+
+    let currentStreakDays = 0;
+    for (const record of distinctDates) {
+      const dStr = new Date(record.loggedDate).toISOString().split('T')[0];
+      if (dStr === expectedDateStr) {
+        currentStreakDays++;
+        const [y, m, d] = expectedDateStr.split('-').map(Number);
+        expectedDateStr = new Date(Date.UTC(y, m - 1, d - 1)).toISOString().split('T')[0];
+      } else {
+        // Discontinuity found, streak ends immediately
+        break;
+      }
+    }
+
+    return currentStreakDays;
   }
 }

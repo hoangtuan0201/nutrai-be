@@ -88,5 +88,10 @@ export interface SendChatResponse {
   assistantMessage: ChatMessageItem;
   todayNutrition: TodayNutritionContext;
   contextUpdated: boolean;
+  quota?: {
+    used: number;
+    limit: number;
+    remaining: number;
+  };
 }
 

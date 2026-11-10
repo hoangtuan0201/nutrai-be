@@ -99,6 +99,20 @@ export class ProgressRepository {
     });
   }
 
+  async getDistinctMealDates(userId: string, maxDate: Date) {
+    return this.prisma.meal.findMany({
+      where: {
+        userId,
+        loggedDate: {
+          lte: maxDate,
+        },
+      },
+      select: { loggedDate: true },
+      distinct: ['loggedDate'],
+      orderBy: { loggedDate: 'desc' },
+    });
+  }
+
   async upsertNutritionTarget(
     userId: string,
     payload: {

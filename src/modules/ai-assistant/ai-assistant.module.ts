@@ -12,9 +12,10 @@ import { ProgressTool } from './tools/progress.tool';
 import { PrismaModule } from '../../database/prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
 import { ProgressModule } from '../progress/progress.module';
+import { AiModule } from '../ai/ai.module';
 
 @Module({
-  imports: [ConfigModule, PrismaModule, AuthModule, ProgressModule],
+  imports: [ConfigModule, PrismaModule, AuthModule, ProgressModule, AiModule],
   controllers: [AiAssistantController],
   providers: [
     AiAssistantService,

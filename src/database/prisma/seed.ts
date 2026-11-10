@@ -542,29 +542,23 @@ async function main() {
     data: {
       id: convoId,
       userId,
-      title: 'Weight Loss Nutrition Advice',
+      title: 'Muscle Gain Nutrition Advice',
       isActive: true,
       lastMessageAt: daysAgo(0),
       messages: {
         create: [
           {
-            role: 'SYSTEM',
-            content: 'You are NutraAI — an intelligent nutrition assistant. The user wants to lose weight. Their daily target is 1800 kcal.',
-            tokensUsed: 40,
+            role: 'USER',
+            content: 'I want to build muscle and gain healthy weight. How should I plan my diet?',
+            tokensUsed: 20,
             createdAt: daysAgo(2),
           },
           {
-            role: 'USER',
-            content: 'I want to lose 5kg in 2 months. How should I plan my diet?',
-            tokensUsed: 20,
-            createdAt: new Date(daysAgo(2).getTime() + 1000),
-          },
-          {
             role: 'ASSISTANT',
-            content: 'To lose 5kg in 2 months, aim for a caloric deficit of around 500-600 kcal/day relative to your TDEE. With your estimated TDEE of 2300 kcal, a target of 1800 kcal/day is optimal.\n\n🍽️ Meal Suggestions:\n- Breakfast: 400-450 kcal (eggs + whole wheat toast)\n- Lunch: 550-600 kcal (rice + chicken breast + greens)\n- Dinner: 450-500 kcal (salmon + salad + light carbs)\n- Snack: 150-200 kcal (Greek yogurt + fresh fruit)',
+            content: 'To build lean muscle effectively, aim for a caloric surplus of around 300-500 kcal/day relative to your TDEE. With your target of 2200 kcal/day, eating sufficient protein (130-140g) is key.\n\n🍽️ Meal Suggestions:\n- Breakfast: 500-550 kcal (eggs + oatmeal + peanut butter)\n- Lunch: 600-650 kcal (rice + chicken breast + broccoli)\n- Dinner: 550-600 kcal (salmon + sweet potato + greens)\n- Snack: 200-250 kcal (Greek yogurt + banana + almonds)',
             tokensUsed: 180,
             latencyMs: 1500,
-            createdAt: new Date(daysAgo(2).getTime() + 3000),
+            createdAt: new Date(daysAgo(2).getTime() + 2000),
           },
           {
             role: 'USER',
@@ -574,7 +568,7 @@ async function main() {
           },
           {
             role: 'ASSISTANT',
-            content: "Not necessarily! As long as you hit your daily protein goal of 100g through whole foods (chicken, fish, eggs, tofu), supplements aren't required. However, if you are short on time, 1 scoop of whey (~120 kcal, 24g protein) post-workout is very convenient. 💪",
+            content: "Not necessarily! As long as you hit your daily protein goal of 135g through whole foods (chicken, fish, eggs, tofu), supplements aren't required. However, if you are short on time, 1 scoop of whey (~120 kcal, 24g protein) post-workout is very convenient. 💪",
             tokensUsed: 120,
             latencyMs: 1100,
             createdAt: new Date(daysAgo(1).getTime() + 2000),
@@ -642,13 +636,13 @@ async function main() {
         id: proMonthlyId,
         name: 'Pro Monthly',
         description: 'Unlimited AI features, advanced insights, export reports',
-        price: 99000,
+        price: 49000,
         currency: 'VND',
         billingPeriod: 'MONTHLY',
         features: {
-          maxMealsPerDay: -1, // unlimited
-          aiAnalysisPerDay: -1,
-          aiChatPerDay: -1,
+          maxMealsPerDay: -1,
+          aiAnalysisPerDay: 20,
+          aiChatPerDay: 50,
           exportReports: true,
           advancedInsights: true,
           prioritySupport: true,
@@ -659,13 +653,13 @@ async function main() {
         id: proYearlyId,
         name: 'Pro Yearly',
         description: 'All Pro features, billed yearly (save 30%)',
-        price: 799000,
+        price: 399000,
         currency: 'VND',
         billingPeriod: 'YEARLY',
         features: {
           maxMealsPerDay: -1,
-          aiAnalysisPerDay: -1,
-          aiChatPerDay: -1,
+          aiAnalysisPerDay: 20,
+          aiChatPerDay: 50,
           exportReports: true,
           advancedInsights: true,
           prioritySupport: true,
@@ -686,7 +680,6 @@ async function main() {
       transactionId: `GP-${uuid().slice(0, 8)}`,
       startsAt: daysAgo(15),
       expiresAt: new Date(new Date().setDate(new Date().getDate() + 15)),
-      autoRenew: true,
     },
   });
 

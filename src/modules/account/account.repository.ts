@@ -15,12 +15,38 @@ export class AccountRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findUser(userId: string) {
+    const now = new Date();
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, name: true, avatarUrl: true, role: true, createdAt: true },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        avatarUrl: true,
+        role: true,
+        createdAt: true,
+        subscriptions: {
+          where: {
+            status: 'ACTIVE',
+            expiresAt: { gt: now },
+          },
+          include: { plan: true },
+          orderBy: { expiresAt: 'desc' },
+          take: 1,
+        },
+      },
     });
     if (!user) throw new NotFoundException('User not found');
-    return user;
+
+    const activeSub = user.subscriptions[0] ?? null;
+    const { subscriptions: _subs, ...rest } = user;
+
+    return {
+      ...rest,
+      isPro: Boolean(activeSub),
+      planName: activeSub ? activeSub.plan.name : 'Free Plan',
+      subscriptionExpiresAt: activeSub ? activeSub.expiresAt : null,
+    };
   }
 
   updateAvatar(userId: string, avatarUrl: string) {

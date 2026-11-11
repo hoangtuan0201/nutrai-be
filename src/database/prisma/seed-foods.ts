@@ -12,11 +12,11 @@ import * as crypto from 'crypto';
 
 dotenv.config();
 
-const user = process.env.POSTGRES_USER || 'postgres';
-const password = process.env.POSTGRES_PASSWORD || '8640633z';
-const host = process.env.POSTGRES_HOST || 'localhost';
-const port = process.env.POSTGRES_PORT || '5432';
-const db = process.env.POSTGRES_DB || 'nutraai_db';
+const user = process.env.POSTGRES_USER;
+const password = process.env.POSTGRES_PASSWORD;
+const host = process.env.POSTGRES_HOST;
+const port = process.env.POSTGRES_PORT;
+const db = process.env.POSTGRES_DB;
 
 let connectionString = process.env.DATABASE_URL;
 if (!connectionString || connectionString.includes('${')) {

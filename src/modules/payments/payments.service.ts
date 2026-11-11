@@ -168,7 +168,7 @@ export class PaymentsService {
 
     if (payment.status === PaymentStatus.PENDING && payment.paymentMethod === PaymentMethod.SEPAY) {
       const code = payment.paymentCode ?? payment.transactionId;
-      const minAmount = code === 'USERPRO' ? Math.min(payment.amount, 49000) : payment.amount;
+      const minAmount = payment.amount;
       const matchedTx = await this.sepayProvider.findMatchingTransaction(code, minAmount);
 
       if (matchedTx) {

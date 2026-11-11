@@ -252,8 +252,7 @@ export class SePayProvider {
 
       const codeMatches =
         upperContent.includes(normalizedCode) ||
-        upperCode === normalizedCode ||
-        (upperContent === 'USERPRO' && normalizedCode.startsWith('NUTRA'));
+        upperCode === normalizedCode;
 
       if (codeMatches && tx.amount >= minAmount) {
         return tx;

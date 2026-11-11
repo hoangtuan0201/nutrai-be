@@ -114,12 +114,7 @@ export class PaymentProcessingService {
 
     // 3. Extract payment code & locate Payment
     const extractedCode = this.extractPaymentCode(tx.content, tx.code);
-    let payment = extractedCode ? await this.repo.findPaymentByCode(extractedCode) : null;
-
-    // Fallback for SePay Sandbox test transfers with generic "USERPRO" content
-    if (!payment && extractedCode?.startsWith('USERPRO')) {
-      payment = await this.repo.findLatestPendingSePayPayment();
-    }
+    const payment = extractedCode ? await this.repo.findPaymentByCode(extractedCode) : null;
 
     if (!payment) {
       this.logger.warn(

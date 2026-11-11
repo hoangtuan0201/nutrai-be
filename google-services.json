@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "86356630707-gkdb1v05aerargoo846hb5n4rvo23p29.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.nutraai.mobile",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
           "client_id": "86356630707-ojpbhg8ai552sphngikiffpiu3d3qgoa.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

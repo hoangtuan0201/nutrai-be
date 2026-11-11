@@ -99,36 +99,7 @@ npm run start:dev
 
 ---
 
-## 💡 Mẫu thiết kế CQRS (Command Query Responsibility Segregation)
 
-Dự án sử dụng gói `@nestjs/cqrs` để phân tách rõ ràng giữa tác vụ **Đọc (Queries)** và **Ghi (Commands)**:
-
-```mermaid
-graph TD
-    Client[Client / Mobile App] -->|POST /meals| Controller[MealsController]
-    Client -->|GET /meals/user/:id| Controller
-    
-    Controller -->|Dispatch Command| CommandBus[Command Bus]
-    Controller -->|Dispatch Query| QueryBus[Query Bus]
-    
-    CommandBus -->|Execute| CreateMealHandler[CreateMealHandler]
-    CreateMealHandler -->|Write DB| Prisma[Prisma Service]
-    CreateMealHandler -->|Publish Event| EventBus[Event Bus]
-    
-    EventBus -->|Handle Async| MealCreatedHandler[MealCreatedHandler]
-    
-    QueryBus -->|Execute| GetMealsHandler[GetMealsHandler]
-    GetMealsHandler -->|Read DB| Prisma
-```
-
-### 1. Phía ghi dữ liệu (Write side - Command)
-- **Command**: `CreateMealCommand` ôm dữ liệu gửi vào từ DTO.
-- **Handler**: `CreateMealHandler` nhận Lệnh, gọi `PrismaService` lưu bản ghi vào PostgreSQL, đồng thời phát một sự kiện không đồng bộ `MealCreatedEvent` qua `EventBus`.
-- **Event Handler**: `MealCreatedHandler` lắng nghe sự kiện để chạy các tác vụ nền phụ (như tính toán lại tổng calo ngày qua LLM, gửi cảnh báo,...).
-
-### 2. Phía đọc dữ liệu (Read side - Query)
-- **Query**: `GetMealsQuery` ôm tham số lọc (ví dụ `userId`).
-- **Handler**: `GetMealsHandler` trực tiếp đọc dữ liệu từ DB qua Prisma với tốc độ tối ưu nhất và trả thẳng về client.
 
 ---
 

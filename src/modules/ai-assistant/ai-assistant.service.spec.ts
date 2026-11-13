@@ -7,6 +7,7 @@ import { PromptService } from './services/prompt.service';
 import { LlmService } from './services/llm.service';
 import { FullAiContextSnapshot } from './interfaces/ai-assistant.interface';
 import { AiQuotaService } from '../ai/ai-quota.service';
+import { CloudinaryService } from '../../common/cloudinary/cloudinary.service';
 
 describe('AiAssistantService', () => {
   let service: AiAssistantService;
@@ -154,6 +155,12 @@ describe('AiAssistantService', () => {
         {
           provide: AiQuotaService,
           useValue: mockAiQuota,
+        },
+        {
+          provide: CloudinaryService,
+          useValue: {
+            uploadImage: jest.fn().mockResolvedValue('https://res.cloudinary.com/nutraai/meals/mock.jpg'),
+          },
         },
       ],
     }).compile();

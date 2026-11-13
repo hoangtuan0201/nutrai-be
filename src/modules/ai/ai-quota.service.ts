@@ -160,7 +160,7 @@ export class AiQuotaService {
     if (quota.scans.remaining <= 0) {
       const message = quota.isPro
         ? `You have reached your daily Pro limit of ${quota.scans.limit} AI food scans. Resets at midnight.`
-        : "You've used all your free AI scans today. Upgrade to NutraAI Pro for 20 scans per day.";
+        : "You've used all your free AI scans today. Upgrade to NutrAI Pro for 20 scans per day.";
 
       this.logger.warn(`Scan quota exceeded for user=${userId} (${quota.planName}: ${quota.scans.used}/${quota.scans.limit})`);
 
@@ -185,7 +185,7 @@ export class AiQuotaService {
     if (quota.chats.remaining <= 0) {
       const message = quota.isPro
         ? `You have reached your daily Pro limit of ${quota.chats.limit} AI messages. Resets at midnight.`
-        : "You've reached your daily free limit of 5 AI messages. Upgrade to NutraAI Pro for 50 messages per day.";
+        : "You've reached your daily free limit of 5 AI messages. Upgrade to NutrAI Pro for 50 messages per day.";
 
       this.logger.warn(`Chat quota exceeded for user=${userId} (${quota.planName}: ${quota.chats.used}/${quota.chats.limit})`);
 

@@ -143,7 +143,7 @@ export class AiAssistantService {
     } catch (err: any) {
       this.logger.error(`AI Assistant chat failed: ${err.message}`, err.stack);
       throw new InternalServerErrorException(
-        `NutraAI Assistant is temporarily unavailable: ${err.message || 'Please try again.'}`,
+        `NutrAI Assistant is temporarily unavailable: ${err.message || 'Please try again.'}`,
       );
     }
 

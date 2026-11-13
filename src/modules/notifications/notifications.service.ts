@@ -460,7 +460,7 @@ export class NotificationsService {
     const metaMap: Record<MealType, { title: string; body: string; tag: string }> = {
       BREAKFAST: {
         title: 'Good Morning! Time for Breakfast 🍳',
-        body: "Start your day strong! Don't forget to log your breakfast in NutraAI.",
+        body: "Start your day strong! Don't forget to log your breakfast in NutrAI.",
         tag: `REMINDER_BREAKFAST_${dateString}`,
       },
       LUNCH: {

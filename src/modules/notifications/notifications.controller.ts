@@ -87,8 +87,8 @@ export class NotificationsController {
     return this.notificationsService.sendToUser({
       userId: user.id,
       type: NotificationType.MEAL_REMINDER,
-      title: 'NutraAI Push Active! 🔔',
-      body: 'Great! Your device is connected to Firebase Cloud Messaging & NutraAI alerts.',
+      title: 'NutrAI Push Active! 🔔',
+      body: 'Great! Your device is connected to Firebase Cloud Messaging & NutrAI alerts.',
       data: {
         route: '/(main)/meals',
       },

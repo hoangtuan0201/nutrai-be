@@ -18,7 +18,7 @@ const MEAL_REMINDER_META: Record<'BREAKFAST' | 'LUNCH' | 'DINNER', MealReminderM
     mealType: MealType.BREAKFAST,
     tag: 'REMINDER_BREAKFAST',
     title: 'Good Morning! Time for Breakfast 🍳',
-    body: "Start your day strong! Don't forget to log your breakfast in NutraAI.",
+    body: "Start your day strong! Don't forget to log your breakfast in NutrAI.",
   },
   LUNCH: {
     mealType: MealType.LUNCH,

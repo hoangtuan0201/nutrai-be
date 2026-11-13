@@ -40,8 +40,8 @@ async function bootstrap() {
 
   // Swagger OpenAPI Setup
   const config = new DocumentBuilder()
-    .setTitle('NutraAI API')
-    .setDescription('NutraAI (AI-Powered Fitness & Nutrition Tracking) Backend API Documentation')
+    .setTitle('NutrAI API')
+    .setDescription('NutrAI (AI-Powered Fitness & Nutrition Tracking) Backend API Documentation')
     .setVersion('1.0')
     .addBearerAuth()
     .build();

@@ -353,7 +353,7 @@ export class PaymentProcessingService {
     });
 
     this.logger.log(
-      `✅ Payment COMPLETED & NutraAI Pro activated: userId=${params.userId}, paymentId=${params.paymentId}, subId=${result.subscription.id}`,
+      `✅ Payment COMPLETED & NutrAI Pro activated: userId=${params.userId}, paymentId=${params.paymentId}, subId=${result.subscription.id}`,
     );
 
     // Fire-and-forget Push + In-App notification
@@ -361,7 +361,7 @@ export class PaymentProcessingService {
       .sendToUser({
         userId: params.userId,
         type: NotificationType.SUBSCRIPTION,
-        title: 'Welcome to NutraAI Pro! ⭐',
+        title: 'Welcome to NutrAI Pro! ⭐',
         body: `Your ${plan.name} subscription is now active until ${result.subscription.expiresAt.toISOString().slice(0, 10)}. Enjoy unlimited AI food scanning and coaching!`,
         data: {
           screen: 'subscription',

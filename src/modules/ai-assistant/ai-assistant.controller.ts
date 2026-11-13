@@ -42,7 +42,7 @@ export class AiAssistantController {
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   @ApiOperation({
-    summary: 'Send a message to NutraAI Nutrition Assistant (Hybrid Direct Context + Tool Calling)',
+    summary: 'Send a message to NutrAI Nutrition Assistant (Hybrid Direct Context + Tool Calling)',
   })
   @ApiResponse({ status: 200, description: 'AI Assistant reply and updated nutrition snapshot.' })
   async sendChatMessage(

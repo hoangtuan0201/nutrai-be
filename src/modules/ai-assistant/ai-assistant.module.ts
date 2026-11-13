@@ -13,9 +13,10 @@ import { PrismaModule } from '../../database/prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
 import { ProgressModule } from '../progress/progress.module';
 import { AiModule } from '../ai/ai.module';
+import { CloudinaryModule } from '../../common/cloudinary/cloudinary.module';
 
 @Module({
-  imports: [ConfigModule, PrismaModule, AuthModule, ProgressModule, AiModule],
+  imports: [ConfigModule, PrismaModule, AuthModule, ProgressModule, AiModule, CloudinaryModule],
   controllers: [AiAssistantController],
   providers: [
     AiAssistantService,

@@ -55,6 +55,7 @@ export interface FullAiContextSnapshot {
   todayNutrition: TodayNutritionContext;
   profile: UserProfileContext;
   progress: ProgressTrendContext;
+  attachedImageUrl?: string | null;
   toolsExecuted?: Array<{
     name: string;
     args: Record<string, any>;

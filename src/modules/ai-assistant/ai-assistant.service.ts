@@ -4,6 +4,7 @@ import { ContextService } from './services/context.service';
 import { PromptService } from './services/prompt.service';
 import { LlmService } from './services/llm.service';
 import { AiQuotaService } from '../ai/ai-quota.service';
+import { CloudinaryService } from '../../common/cloudinary/cloudinary.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import {
@@ -22,6 +23,7 @@ export class AiAssistantService {
     private readonly promptService: PromptService,
     private readonly llmService: LlmService,
     private readonly aiQuotaService: AiQuotaService,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   /**
@@ -108,6 +110,33 @@ export class AiAssistantService {
       this.repository.getOrCreateConversation(userId, dto.conversationId, userText),
     ]);
 
+    // Upload image if attached, or resolve from recent history for multi-turn log flow
+    let attachedImageUrl: string | null = null;
+    if (dto.imageBase64) {
+      try {
+        attachedImageUrl = await this.cloudinaryService.uploadImage(
+          dto.imageBase64,
+          'nutraai/meals',
+        );
+        this.logger.log(`Uploaded AI Chat attached image to Cloudinary: ${attachedImageUrl}`);
+      } catch (err: any) {
+        this.logger.warn(`Failed to upload chat image to Cloudinary: ${err.message}`);
+      }
+    } else if (conversation.messages && conversation.messages.length > 0) {
+      for (let i = conversation.messages.length - 1; i >= 0; i--) {
+        const rawMsg = conversation.messages[i] as any;
+        const snap = rawMsg.contextSnapshot as FullAiContextSnapshot | undefined;
+        // If a past turn already executed quick_log_meal, stop searching further back
+        if (snap?.toolsExecuted?.some((t) => t.name === 'quick_log_meal')) {
+          break;
+        }
+        if (snap?.attachedImageUrl) {
+          attachedImageUrl = snap.attachedImageUrl;
+          break;
+        }
+      }
+    }
+
     const systemInstructionText =
       this.promptService.buildHybridSystemInstruction(initialContext);
     const contents = this.promptService.buildConversationContents(
@@ -133,6 +162,8 @@ export class AiAssistantService {
         systemInstructionText,
         contents,
         toolsExecuted,
+        attachedImageUrl,
+        attachedImageBase64: dto.imageBase64,
         onContextMutated: () => {
           contextUpdated = true;
         },
@@ -150,6 +181,10 @@ export class AiAssistantService {
     const finalContext: FullAiContextSnapshot = contextUpdated
       ? await this.contextService.buildUserNutritionContext(userId)
       : initialContext;
+
+    if (attachedImageUrl) {
+      finalContext.attachedImageUrl = attachedImageUrl;
+    }
 
     if (toolsExecuted.length > 0) {
       finalContext.toolsExecuted = toolsExecuted;

@@ -50,6 +50,8 @@ export class LlmService {
     systemInstructionText: string;
     contents: Array<{ role: string; parts: any[] }>;
     toolsExecuted: Array<{ name: string; args: Record<string, any>; resultSummary: any }>;
+    attachedImageUrl?: string | null;
+    attachedImageBase64?: string | null;
     onContextMutated: () => void;
   }): Promise<{ text: string; totalTokens: number }> {
     if (!this.apiKey) {
@@ -117,6 +119,10 @@ export class LlmService {
           params.userId,
           toolName,
           toolArgs,
+          {
+            attachedImageUrl: params.attachedImageUrl,
+            attachedImageBase64: params.attachedImageBase64,
+          },
         );
 
         if (mutatedContext) {
@@ -179,6 +185,10 @@ export class LlmService {
     userId: string,
     toolName: string,
     args: Record<string, any>,
+    options?: {
+      attachedImageUrl?: string | null;
+      attachedImageBase64?: string | null;
+    },
   ): Promise<ToolDispatchResult> {
     try {
       switch (toolName) {
@@ -204,6 +214,8 @@ export class LlmService {
             protein: Number(args.protein) || 0,
             carbs: Number(args.carbs) || 0,
             fat: Number(args.fat) || 0,
+            imageUrl: args.imageUrl || options?.attachedImageUrl || undefined,
+            imageBase64: options?.attachedImageBase64 || undefined,
           });
           return { result, mutatedContext: Boolean(result?.success) };
         }

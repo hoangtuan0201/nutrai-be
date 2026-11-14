@@ -1,9 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, UserProfile } from '@prisma/client';
+import { BillingPeriod, Prisma, SubscriptionStatus, UserProfile } from '@prisma/client';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../../database/prisma/prisma.service';
 import { ageFromDob, calculateBMR, calculateTDEE } from '../../profile/nutrition-calculator';
 import { toPaginated, toSkipTake } from '../common/pagination';
 import { activeProSubscriptionWhere } from '../common/subscription.filters';
+import { GrantProDto } from './dto/grant-pro.dto';
 import { QueryAdminUsersDto, UserPlanFilter } from './dto/query-admin-users.dto';
 
 const USER_LIST_SELECT = {
@@ -132,6 +134,81 @@ export class AdminUsersService {
       tdee: tdee !== null ? Math.round(tdee) : null,
       timezone: profile.timezone,
     };
+  }
+
+  async grantPro(userId: string, dto: GrantProDto) {
+    const billingPeriod = dto.billingPeriod ?? BillingPeriod.MONTHLY;
+    const durationDays =
+      dto.durationDays ?? (billingPeriod === BillingPeriod.YEARLY ? 365 : 30);
+
+    await this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.findFirst({
+        where: { id: userId, deletedAt: null },
+        select: { id: true },
+      });
+      if (!user) throw new NotFoundException('User not found');
+
+      const plan =
+        (await tx.subscriptionPlan.findFirst({
+          where: { isActive: true, price: { gt: 0 }, billingPeriod },
+          orderBy: { sortOrder: 'asc' },
+        })) ??
+        (await tx.subscriptionPlan.findFirst({
+          where: { isActive: true, price: { gt: 0 } },
+          orderBy: { sortOrder: 'asc' },
+        }));
+
+      if (!plan) {
+        throw new NotFoundException('No active Pro subscription plan found');
+      }
+
+      const now = new Date();
+      const existingActive = await tx.userSubscription.findFirst({
+        where: { userId, ...activeProSubscriptionWhere(now) },
+        orderBy: { expiresAt: 'desc' },
+        select: { expiresAt: true },
+      });
+
+      const baseDate = existingActive && existingActive.expiresAt > now ? existingActive.expiresAt : now;
+      const expiresAt = new Date(baseDate.getTime() + durationDays * 24 * 60 * 60 * 1000);
+
+      await tx.userSubscription.updateMany({
+        where: { userId, status: SubscriptionStatus.ACTIVE },
+        data: { status: SubscriptionStatus.CANCELLED },
+      });
+
+      await tx.userSubscription.create({
+        data: {
+          userId,
+          planId: plan.id,
+          status: SubscriptionStatus.ACTIVE,
+          transactionId: `ADMIN-PRO-${randomUUID().slice(0, 8).toUpperCase()}`,
+          startsAt: now,
+          expiresAt,
+        },
+      });
+    });
+
+    return this.getUserDetail(userId);
+  }
+
+  async revokePro(userId: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
+      select: { id: true },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    await this.prisma.userSubscription.updateMany({
+      where: {
+        userId,
+        status: SubscriptionStatus.ACTIVE,
+        plan: { price: { gt: 0 } },
+      },
+      data: { status: SubscriptionStatus.CANCELLED },
+    });
+
+    return this.getUserDetail(userId);
   }
 }
 

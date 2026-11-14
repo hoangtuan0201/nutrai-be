@@ -146,42 +146,24 @@ model NutritionTarget {
 // DOMAIN 3: FOOD & MEAL TRACKING
 // ═══════════════════════════════════════════════════════════════
 
-model FoodCategory {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  description String?
-  iconUrl     String?
-  sortOrder   Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  foods       Food[]
-
-  @@map("food_categories")
-}
-
 model Food {
-  id                 String       @id @default(uuid())
-  categoryId         String
-  category           FoodCategory @relation(fields: [categoryId], references: [id])
+  id                 String   @id @default(uuid())
   name               String
   description        String?
   caloriesPer100g    Float
   proteinPer100g     Float
   carbsPer100g       Float
   fatPer100g         Float
-  servingUnit        String       @default("g")
-  defaultServingSize Float       @default(100)
+  servingUnit        String   @default("g")
+  defaultServingSize Float    @default(100)
   imageUrl           String?
-  isVerified         Boolean      @default(false)
-  isActive           Boolean      @default(true)
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
+  isVerified         Boolean  @default(false)
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   mealItems          MealItem[]
 
-  @@index([categoryId])
   @@index([name])
   @@map("foods")
 }

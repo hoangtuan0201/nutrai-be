@@ -265,6 +265,38 @@ export class PaymentProcessingService {
   }
 
   /**
+   * Admin manual activation (e.g. user transferred money after the 15-minute QR expired,
+   * so the webhook was IGNORED or never matched). Reuses the same atomic activation flow.
+   */
+  async activateManually(params: {
+    paymentId: string;
+    userId: string;
+    planId?: string | null;
+    amount: number;
+    adminId: string;
+    note?: string;
+    bankReference?: string;
+  }): Promise<ProcessedPaymentResult> {
+    const now = Date.now();
+    return this.activateSubscriptionAtomically({
+      paymentId: params.paymentId,
+      userId: params.userId,
+      planId: params.planId,
+      provider: 'MANUAL',
+      eventId: `manual_${params.paymentId}_${now}`,
+      eventType: 'admin_manual_activation',
+      providerTxId: `ADMIN-${params.paymentId}`,
+      paidAmount: params.amount,
+      payload: {
+        activatedBy: params.adminId,
+        note: params.note ?? null,
+        bankReference: params.bankReference ?? null,
+        activatedAt: new Date(now).toISOString(),
+      },
+    });
+  }
+
+  /**
    * Executes an atomic PostgreSQL transaction to:
    * - Create or extend the user's active `UserSubscription`
    * - Mark `Payment` as `COMPLETED` (`PAID`)
@@ -275,7 +307,7 @@ export class PaymentProcessingService {
     paymentId: string;
     userId: string;
     planId?: string | null;
-    provider: 'SEPAY' | 'STRIPE';
+    provider: 'SEPAY' | 'STRIPE' | 'MANUAL';
     eventId: string;
     eventType: string;
     providerTxId: string;

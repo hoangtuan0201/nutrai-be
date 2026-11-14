@@ -18,8 +18,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "seed": "npx prisma db seed",
-    "seed:foods": "ts-node -O \"{\\\"module\\\":\\\"CommonJS\\\"}\" src/database/prisma/seed-foods.ts"
+    "seed": "npx prisma db seed"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} src/database/prisma/seed.ts"

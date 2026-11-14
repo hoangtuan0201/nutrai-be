@@ -7,11 +7,6 @@ export class SearchFoodQueryDto {
   @IsOptional()
   query?: string;
 
-  @ApiPropertyOptional({ description: 'Category ID to filter foods', example: 'category-uuid' })
-  @IsString()
-  @IsOptional()
-  categoryId?: string;
-
   @ApiPropertyOptional({
     description: 'Search data source: all (local + USDA), local, or usda',
     enum: ['all', 'local', 'usda'],

@@ -11,7 +11,6 @@ describe('FoodsService', () => {
   const mockFood = {
     id: 'food-1',
     name: 'Grilled Chicken Breast',
-    categoryId: 'cat-1',
     caloriesPer100g: 165,
     proteinPer100g: 31,
     carbsPer100g: 0,
@@ -23,24 +22,12 @@ describe('FoodsService', () => {
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
-    category: {
-      id: 'cat-1',
-      name: 'Poultry',
-      description: null,
-      iconUrl: null,
-      sortOrder: 1,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
   };
 
   beforeEach(async () => {
     const mockRepo: Partial<jest.Mocked<FoodsRepository>> = {
       searchLocal: jest.fn(),
-      findAllCategories: jest.fn(),
       findById: jest.fn(),
-      findOrCreateCategory: jest.fn(),
       createFood: jest.fn(),
     };
 
@@ -72,9 +59,9 @@ describe('FoodsService', () => {
     it('should return local items when source is local', async () => {
       repository.searchLocal.mockResolvedValue([mockFood as any]);
 
-      const result = await service.searchFoods('chicken', undefined, 'local');
+      const result = await service.searchFoods('chicken', 'local');
 
-      expect(repository.searchLocal).toHaveBeenCalledWith('chicken', undefined);
+      expect(repository.searchLocal).toHaveBeenCalledWith('chicken');
       expect(result.localItems).toHaveLength(1);
       expect(result.localItems[0].name).toBe('Grilled Chicken Breast');
       expect(result.usdaItems).toHaveLength(0);

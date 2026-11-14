@@ -20,6 +20,6 @@ import { StripeProvider } from './providers/stripe.provider';
     SePayProvider,
     StripeProvider,
   ],
-  exports: [PaymentsService, PaymentsRepository],
+  exports: [PaymentsService, PaymentsRepository, PaymentProcessingService],
 })
 export class PaymentsModule {}

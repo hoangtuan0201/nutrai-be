@@ -36,15 +36,7 @@ export class FoodsController {
   })
   @ApiResponse({ status: 200, description: 'Search results returned successfully.' })
   async searchFoods(@Query() query: SearchFoodQueryDto) {
-    return this.foodsService.searchFoods(query.query, query.categoryId, query.source);
-  }
-
-  @Get('categories')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'List all internal food categories' })
-  @ApiResponse({ status: 200, description: 'List of food categories.' })
-  async getCategories() {
-    return this.foodsService.getCategories();
+    return this.foodsService.searchFoods(query.query, query.source);
   }
 
   @Get('barcode/:barcode')
@@ -79,7 +71,6 @@ export class FoodsController {
       fatPer100g: number;
       servingUnit?: string;
       defaultServingSize?: number;
-      categoryName?: string;
     },
   ) {
     return this.foodsService.saveUsdaFoodToLocal(dto);

@@ -6,7 +6,6 @@ export interface StandardFoodItem {
   id?: string;
   name: string;
   source: 'LOCAL' | 'USDA' | 'BARCODE';
-  categoryName?: string;
   caloriesPer100g: number;
   proteinPer100g: number;
   carbsPer100g: number;
@@ -43,7 +42,6 @@ export class FoodsService {
 
   async searchFoods(
     query?: string,
-    categoryId?: string,
     source: 'all' | 'local' | 'usda' = 'all',
   ): Promise<{
     localItems: StandardFoodItem[];
@@ -56,12 +54,11 @@ export class FoodsService {
 
     // 1. Tìm kiếm trong Database nội bộ
     if (source === 'all' || source === 'local') {
-      const localFoods = await this.foodsRepository.searchLocal(trimmedQuery, categoryId);
-      localItems = localFoods.map((f: any) => ({
+      const localFoods = await this.foodsRepository.searchLocal(trimmedQuery);
+      localItems = localFoods.map((f) => ({
         id: f.id,
         name: f.name,
         source: 'LOCAL',
-        categoryName: f.category?.name || 'Chung',
         caloriesPer100g: f.caloriesPer100g,
         proteinPer100g: f.proteinPer100g,
         carbsPer100g: f.carbsPer100g,
@@ -90,10 +87,6 @@ export class FoodsService {
     };
   }
 
-  async getCategories() {
-    return this.foodsRepository.findAllCategories();
-  }
-
   async getFoodById(id: string) {
     const food = await this.foodsRepository.findById(id);
     if (!food) {
@@ -113,15 +106,9 @@ export class FoodsService {
     fatPer100g: number;
     servingUnit?: string;
     defaultServingSize?: number;
-    categoryName?: string;
   }) {
-    const category = await this.foodsRepository.findOrCreateCategory(
-      item.categoryName || 'USDA Import',
-    );
-
     return this.foodsRepository.createFood({
       name: item.name,
-      categoryId: category.id,
       caloriesPer100g: Math.round(item.caloriesPer100g * 10) / 10,
       proteinPer100g: Math.round(item.proteinPer100g * 10) / 10,
       carbsPer100g: Math.round(item.carbsPer100g * 10) / 10,
@@ -235,7 +222,6 @@ export class FoodsService {
         fatPer100g: Math.round(fat * 10) / 10,
         servingUnit: food.servingSizeUnit || 'g',
         defaultServingSize: food.servingSize ? Number(food.servingSize) : 100,
-        categoryName: food.foodCategory || 'USDA Food',
         isVerified: true,
       });
 
@@ -320,7 +306,6 @@ export class FoodsService {
             brand: p.brands || undefined,
             source: 'BARCODE',
             barcode: cleanBarcode,
-            categoryName: 'Packaged Food',
             caloriesPer100g: Math.round(Number(calories100g) * 10) / 10,
             proteinPer100g: Math.round(Number(protein100g) * 10) / 10,
             carbsPer100g: Math.round(Number(carbs100g) * 10) / 10,
@@ -395,7 +380,6 @@ If unknown or unable to identify this barcode, return:
                 brand: parsed.brand || undefined,
                 source: 'BARCODE',
                 barcode: cleanBarcode,
-                categoryName: 'Packaged Food',
                 caloriesPer100g: Math.round(Number(parsed.caloriesPer100g || servingCal) * 10) / 10,
                 proteinPer100g: Math.round(Number(parsed.proteinPer100g || servingProt) * 10) / 10,
                 carbsPer100g: Math.round(Number(parsed.carbsPer100g || servingCarb) * 10) / 10,

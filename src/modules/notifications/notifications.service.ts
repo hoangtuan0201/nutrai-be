@@ -15,6 +15,26 @@ export interface SendNotificationPayload {
   data?: Record<string, string>;
 }
 
+export interface DeliveryStats {
+  successCount: number;
+  failureCount: number;
+}
+
+/** Provider batch limits: FCM multicast = 500 tokens, Expo push API = 100 messages */
+const FCM_MULTICAST_LIMIT = 500;
+const EXPO_PUSH_LIMIT = 100;
+
+function chunkArray<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) chunks.push(items.slice(i, i + size));
+  return chunks;
+}
+
+function addStats(target: DeliveryStats, source: DeliveryStats) {
+  target.successCount += source.successCount;
+  target.failureCount += source.failureCount;
+}
+
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
@@ -89,27 +109,46 @@ export class NotificationsService {
       ...(payload.data ?? {}),
     };
 
+    await this.pushToTokens(
+      activeDevices.map((d) => d.token),
+      payload.title,
+      payload.body,
+      stringData,
+    );
+
+    return notification;
+  }
+
+  /**
+   * Sends one push message to many device tokens (FCM + Expo), chunked to provider limits.
+   * Returns delivery stats so callers (e.g. admin broadcasts) can report the success rate.
+   */
+  async pushToTokens(
+    tokens: string[],
+    title: string,
+    body: string,
+    data: Record<string, string>,
+  ): Promise<DeliveryStats> {
     const expoTokens: string[] = [];
     const fcmTokens: string[] = [];
 
-    for (const d of activeDevices) {
-      if (d.token.startsWith('ExponentPushToken[') || d.token.startsWith('ExpoPushToken[')) {
-        expoTokens.push(d.token);
-      } else if (!d.token.startsWith('fcm_token_') && !d.token.startsWith('apns_token_')) {
+    for (const token of tokens) {
+      if (token.startsWith('ExponentPushToken[') || token.startsWith('ExpoPushToken[')) {
+        expoTokens.push(token);
+      } else if (!token.startsWith('fcm_token_') && !token.startsWith('apns_token_')) {
         // Real FCM / APNs token (skip fake seed tokens)
-        fcmTokens.push(d.token);
+        fcmTokens.push(token);
       }
     }
 
-    if (fcmTokens.length > 0) {
-      await this.dispatchFcmMulticast(fcmTokens, payload.title, payload.body, stringData);
+    const stats: DeliveryStats = { successCount: 0, failureCount: 0 };
+    for (const chunk of chunkArray(fcmTokens, FCM_MULTICAST_LIMIT)) {
+      addStats(stats, await this.dispatchFcmMulticast(chunk, title, body, data));
     }
-
-    if (expoTokens.length > 0) {
-      await this.dispatchExpoPush(expoTokens, payload.title, payload.body, stringData);
+    for (const chunk of chunkArray(expoTokens, EXPO_PUSH_LIMIT)) {
+      addStats(stats, await this.dispatchExpoPush(chunk, title, body, data));
     }
-
-    return notification;
+    return stats;
   }
 
   private async dispatchFcmMulticast(
@@ -117,7 +156,7 @@ export class NotificationsService {
     title: string,
     body: string,
     data: Record<string, string>,
-  ) {
+  ): Promise<DeliveryStats> {
     try {
       const messaging = getMessaging(this.firebaseApp);
       const response = await messaging.sendEachForMulticast({
@@ -160,8 +199,10 @@ export class NotificationsService {
         await this.repo.deactivateInvalidTokens(invalidTokens);
         this.logger.log(`Deactivated ${invalidTokens.length} expired FCM token(s)`);
       }
+      return { successCount: response.successCount, failureCount: response.failureCount };
     } catch (err) {
       this.logger.warn(`FCM multicast failed: ${(err as Error).message}`);
+      return { successCount: 0, failureCount: tokens.length };
     }
   }
 
@@ -170,7 +211,7 @@ export class NotificationsService {
     title: string,
     body: string,
     data: Record<string, string>,
-  ) {
+  ): Promise<DeliveryStats> {
     try {
       const messages = tokens.map((to) => ({
         to,
@@ -181,7 +222,7 @@ export class NotificationsService {
         channelId: 'nutraai-default',
       }));
 
-      await fetch('https://exp.host/--/api/v2/push/send', {
+      const res = await fetch('https://exp.host/--/api/v2/push/send', {
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -189,8 +230,13 @@ export class NotificationsService {
         },
         body: JSON.stringify(messages),
       });
+      const json = (await res.json().catch(() => null)) as { data?: Array<{ status: string }> } | null;
+      const tickets = json?.data ?? [];
+      const successCount = tickets.filter((t) => t.status === 'ok').length;
+      return { successCount, failureCount: tokens.length - successCount };
     } catch (err) {
       this.logger.warn(`Expo push fallback failed: ${(err as Error).message}`);
+      return { successCount: 0, failureCount: tokens.length };
     }
   }
 

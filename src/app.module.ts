@@ -18,6 +18,7 @@ import jwtConfig from './config/jwt.config';
 import authConfig from './config/auth.config';
 import { validateEnv } from './config/validation.schema';
 import { CloudinaryModule } from './common/cloudinary/cloudinary.module';
+import { RedisModule } from './common/redis/redis.module';
 import { ProgressModule } from './modules/progress/progress.module';
 import { AccountModule } from './modules/account/account.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
@@ -41,6 +42,7 @@ import { AdminModule } from './modules/admin/admin.module';
     AiModule,
     AiAssistantModule,
     CloudinaryModule,
+    RedisModule,
     ProgressModule,
     AccountModule,
     NotificationsModule,

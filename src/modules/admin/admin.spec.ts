@@ -171,8 +171,11 @@ describe('AdminModule (Stage 1)', () => {
       const cloudinary = {
         uploadImage: jest.fn().mockResolvedValue('https://res.cloudinary.com/demo/pho.jpg'),
       } as any;
+      const redisService = {
+        delByPattern: jest.fn().mockResolvedValue(undefined),
+      } as any;
 
-      const service = new AdminFoodsService(prisma, cloudinary);
+      const service = new AdminFoodsService(prisma, cloudinary, redisService);
       const created = await service.createFood({
         name: 'Phở bò',
         caloriesPer100g: 120,
@@ -182,6 +185,7 @@ describe('AdminModule (Stage 1)', () => {
         imageBase64: 'data:image/jpeg;base64,/9j/4AAQ',
       });
       expect(cloudinary.uploadImage).toHaveBeenCalledWith('data:image/jpeg;base64,/9j/4AAQ', 'nutraai/foods');
+      expect(redisService.delByPattern).toHaveBeenCalledWith('foods:local:*');
       expect(created.imageUrl).toBe('https://res.cloudinary.com/demo/pho.jpg');
     });
   });

@@ -8,6 +8,7 @@ import {
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../database/prisma/prisma.service';
 import { CloudinaryService } from '../../../common/cloudinary/cloudinary.service';
+import { RedisService } from '../../../common/redis/redis.service';
 import { toPaginated, toSkipTake } from '../common/pagination';
 import { CreateFoodDto, QueryAdminFoodsDto, UpdateFoodDto } from './dto/food.dto';
 
@@ -20,6 +21,7 @@ export class AdminFoodsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cloudinary: CloudinaryService,
+    private readonly redisService: RedisService,
   ) {}
 
   // ─── Foods ───────────────────────────────────────────────────
@@ -55,9 +57,11 @@ export class AdminFoodsService {
     const { imageBase64, ...data } = dto;
     const imageUrl = imageBase64 ? await this.uploadFoodImage(imageBase64) : undefined;
 
-    return this.prisma.food.create({
+    const created = await this.prisma.food.create({
       data: { ...data, isVerified: data.isVerified ?? true, imageUrl },
     });
+    await this.redisService.delByPattern('foods:local:*');
+    return created;
   }
 
   async updateFood(id: string, dto: UpdateFoodDto) {
@@ -68,16 +72,19 @@ export class AdminFoodsService {
     if (imageBase64) imageUrl = await this.uploadFoodImage(imageBase64);
     else if (removeImage) imageUrl = null;
 
-    return this.prisma.food.update({
+    const updated = await this.prisma.food.update({
       where: { id },
       data: { ...data, ...(imageUrl !== undefined ? { imageUrl } : {}) },
     });
+    await this.redisService.delByPattern('foods:local:*');
+    return updated;
   }
 
   /** Soft delete: meal history keeps referencing the food, but it disappears from search. */
   async deactivateFood(id: string) {
     await this.getFood(id);
     await this.prisma.food.update({ where: { id }, data: { isActive: false } });
+    await this.redisService.delByPattern('foods:local:*');
     return { success: true };
   }
 

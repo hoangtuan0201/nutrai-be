@@ -31,32 +31,4 @@ export class FoodsRepository {
       where: { id },
     });
   }
-
-  async createFood(data: {
-    name: string;
-    description?: string;
-    caloriesPer100g: number;
-    proteinPer100g: number;
-    carbsPer100g: number;
-    fatPer100g: number;
-    servingUnit?: string;
-    defaultServingSize?: number;
-    imageUrl?: string;
-    isVerified?: boolean;
-  }): Promise<Food> {
-    return this.prisma.food.create({
-      data: {
-        name: data.name,
-        description: data.description,
-        caloriesPer100g: data.caloriesPer100g,
-        proteinPer100g: data.proteinPer100g,
-        carbsPer100g: data.carbsPer100g,
-        fatPer100g: data.fatPer100g,
-        servingUnit: data.servingUnit || 'g',
-        defaultServingSize: data.defaultServingSize || 100,
-        imageUrl: data.imageUrl,
-        isVerified: data.isVerified ?? false,
-      },
-    });
-  }
 }

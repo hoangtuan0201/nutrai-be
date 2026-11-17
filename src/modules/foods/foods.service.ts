@@ -1,6 +1,11 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { FoodsRepository } from './foods.repository';
+import { RedisService } from '../../common/redis/redis.service';
+
+const FOODS_LOCAL_DEFAULT_KEY = 'foods:local:default';
+const FOODS_LOCAL_DEFAULT_TTL = 1800; // 30 minutes
+const FOODS_LOCAL_SEARCH_TTL = 600;   // 10 minutes
 
 export interface StandardFoodItem {
   id?: string;
@@ -33,6 +38,7 @@ export class FoodsService {
   constructor(
     private readonly foodsRepository: FoodsRepository,
     private readonly configService: ConfigService,
+    private readonly redisService: RedisService,
   ) {
     this.usdaApiKey =
       this.configService.get<string>('USDA_API_KEY') ||
@@ -49,28 +55,42 @@ export class FoodsService {
     total: number;
   }> {
     const trimmedQuery = query?.trim() || '';
+    const normalizedQuery = trimmedQuery.toLowerCase();
     let localItems: StandardFoodItem[] = [];
     let usdaItems: StandardFoodItem[] = [];
 
-    // 1. Tìm kiếm trong Database nội bộ
+    // 1. Tìm kiếm trong Database nội bộ (ưu tiên Redis Cache)
     if (source === 'all' || source === 'local') {
-      const localFoods = await this.foodsRepository.searchLocal(trimmedQuery);
-      localItems = localFoods.map((f) => ({
-        id: f.id,
-        name: f.name,
-        source: 'LOCAL',
-        caloriesPer100g: f.caloriesPer100g,
-        proteinPer100g: f.proteinPer100g,
-        carbsPer100g: f.carbsPer100g,
-        fatPer100g: f.fatPer100g,
-        servingUnit: f.servingUnit,
-        defaultServingSize: f.defaultServingSize,
-        imageUrl: f.imageUrl || undefined,
-        isVerified: f.isVerified,
-      }));
+      const localCacheKey = normalizedQuery
+        ? `foods:local:q:${normalizedQuery}`
+        : FOODS_LOCAL_DEFAULT_KEY;
+      const localTtl = normalizedQuery
+        ? FOODS_LOCAL_SEARCH_TTL
+        : FOODS_LOCAL_DEFAULT_TTL;
+
+      const cachedLocal = await this.redisService.getJson<StandardFoodItem[]>(localCacheKey);
+      if (cachedLocal) {
+        localItems = cachedLocal;
+      } else {
+        const localFoods = await this.foodsRepository.searchLocal(trimmedQuery);
+        localItems = localFoods.map((f) => ({
+          id: f.id,
+          name: f.name,
+          source: 'LOCAL',
+          caloriesPer100g: f.caloriesPer100g,
+          proteinPer100g: f.proteinPer100g,
+          carbsPer100g: f.carbsPer100g,
+          fatPer100g: f.fatPer100g,
+          servingUnit: f.servingUnit,
+          defaultServingSize: f.defaultServingSize,
+          imageUrl: f.imageUrl || undefined,
+          isVerified: f.isVerified,
+        }));
+        await this.redisService.setJson(localCacheKey, localItems, localTtl);
+      }
     }
 
-    // 2. Tìm kiếm qua USDA API nếu có từ khóa và source cho phép
+    // 2. Tìm kiếm qua USDA API nếu có từ khóa và source cho phép (không cache USDA)
     if ((source === 'all' || source === 'usda') && trimmedQuery.length >= 2) {
       try {
         usdaItems = await this.fetchUsdaFoods(trimmedQuery);
@@ -93,30 +113,6 @@ export class FoodsService {
       throw new NotFoundException(`Không tìm thấy món ăn với ID '${id}'.`);
     }
     return food;
-  }
-
-  /**
-   * Lưu nhanh món ăn từ USDA vào cơ sở dữ liệu nội bộ PostgreSQL để tái sử dụng
-   */
-  async saveUsdaFoodToLocal(item: {
-    name: string;
-    caloriesPer100g: number;
-    proteinPer100g: number;
-    carbsPer100g: number;
-    fatPer100g: number;
-    servingUnit?: string;
-    defaultServingSize?: number;
-  }) {
-    return this.foodsRepository.createFood({
-      name: item.name,
-      caloriesPer100g: Math.round(item.caloriesPer100g * 10) / 10,
-      proteinPer100g: Math.round(item.proteinPer100g * 10) / 10,
-      carbsPer100g: Math.round(item.carbsPer100g * 10) / 10,
-      fatPer100g: Math.round(item.fatPer100g * 10) / 10,
-      servingUnit: item.servingUnit || 'g',
-      defaultServingSize: item.defaultServingSize || 100,
-      isVerified: true,
-    });
   }
 
   /**

@@ -1,8 +1,6 @@
 import {
   Controller,
   Get,
-  Post,
-  Body,
   Param,
   Query,
   UseGuards,
@@ -55,24 +53,5 @@ export class FoodsController {
   @ApiResponse({ status: 404, description: 'Food item not found.' })
   async getFoodById(@Param('id') id: string) {
     return this.foodsService.getFoodById(id);
-  }
-
-  @Post('import-usda')
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Import or save a USDA food item to internal database' })
-  @ApiResponse({ status: 201, description: 'Food item saved to internal database.' })
-  async importUsdaFood(
-    @Body()
-    dto: {
-      name: string;
-      caloriesPer100g: number;
-      proteinPer100g: number;
-      carbsPer100g: number;
-      fatPer100g: number;
-      servingUnit?: string;
-      defaultServingSize?: number;
-    },
-  ) {
-    return this.foodsService.saveUsdaFoodToLocal(dto);
   }
 }

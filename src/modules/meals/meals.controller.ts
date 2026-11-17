@@ -36,6 +36,9 @@ import type { AuthUser } from '../../common/decorators/current-user.decorator';
 export class MealsController {
   constructor(private readonly mealsService: MealsService) {}
 
+  /**
+   * POST /meals — Tạo mới nhật ký bữa ăn cho người dùng hiện tại
+   */
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
@@ -51,6 +54,9 @@ export class MealsController {
     return this.mealsService.createMeal(user.id, dto);
   }
 
+  /**
+   * GET /meals — Lấy danh sách bữa ăn (tùy chọn lọc theo ngày YYYY-MM-DD)
+   */
   @Get()
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
@@ -67,6 +73,9 @@ export class MealsController {
     return this.mealsService.getMealsByUser(user.id);
   }
 
+  /**
+   * GET /meals/today — Lấy danh sách bữa ăn & tổng hợp dinh dưỡng hôm nay
+   */
   @Get('today')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Get today's meals and nutrition summary" })
@@ -76,6 +85,9 @@ export class MealsController {
     return this.mealsService.getDailyMeals(user.id);
   }
 
+  /**
+   * GET /meals/user/:userId — Lấy toàn bộ bữa ăn theo userId (tương thích cũ)
+   */
   @Get('user/:userId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all meal logs of a specific user (legacy compatibility)' })
@@ -88,6 +100,9 @@ export class MealsController {
     return this.mealsService.getMealsByUser(userId);
   }
 
+  /**
+   * GET /meals/:id — Xem chi tiết 1 bữa ăn theo ID
+   */
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get meal detail by ID' })
@@ -101,6 +116,9 @@ export class MealsController {
     return this.mealsService.getMealById(user.id, id);
   }
 
+  /**
+   * PUT /meals/:id — Cập nhật bữa ăn theo ID
+   */
   @Put(':id')
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
@@ -117,6 +135,9 @@ export class MealsController {
     return this.mealsService.updateMeal(user.id, id, dto);
   }
 
+  /**
+   * DELETE /meals/:id — Xóa 1 bữa ăn theo ID
+   */
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete a meal log by ID' })

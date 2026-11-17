@@ -26,6 +26,9 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 export class FoodsController {
   constructor(private readonly foodsService: FoodsService) {}
 
+  /**
+   * GET /foods/search — Tìm kiếm món ăn từ DB nội bộ & USDA API (có Redis Cache)
+   */
   @Get('search')
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
@@ -37,6 +40,9 @@ export class FoodsController {
     return this.foodsService.searchFoods(query.query, query.source);
   }
 
+  /**
+   * GET /foods/barcode/:barcode — Tra cứu thông tin dinh dưỡng sản phẩm theo mã vạch
+   */
   @Get('barcode/:barcode')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Lookup packaged food nutrition by barcode without saving to internal database' })
@@ -46,6 +52,9 @@ export class FoodsController {
     return this.foodsService.getFoodByBarcode(barcode);
   }
 
+  /**
+   * GET /foods/:id — Lấy chi tiết 1 món ăn trong DB nội bộ theo ID
+   */
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get internal food item details by ID' })

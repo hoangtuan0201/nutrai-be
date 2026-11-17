@@ -40,6 +40,9 @@ export class AuthController {
 
   // ─── Email / Password ─────────────────────────────────────────
 
+  /**
+   * POST /auth/register — Đăng ký tài khoản mới bằng Email & Password
+   */
   @Public()
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
@@ -51,6 +54,9 @@ export class AuthController {
     return this.authService.register(dto);
   }
 
+  /**
+   * POST /auth/login — Đăng nhập bằng Email & Password (trả về JWT Access/Refresh)
+   */
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -61,6 +67,9 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
+  /**
+   * POST /auth/forgot-password — Gửi yêu cầu đặt lại mật khẩu qua email
+   */
   @Public()
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
@@ -76,6 +85,9 @@ export class AuthController {
 
   // ─── Google (Firebase) ────────────────────────────────────────
 
+  /**
+   * POST /auth/google — Đăng nhập bằng Google thông qua Firebase ID Token
+   */
   @Public()
   @Post('google')
   @HttpCode(HttpStatus.OK)
@@ -93,6 +105,9 @@ export class AuthController {
 
   // ─── Token management ─────────────────────────────────────────
 
+  /**
+   * POST /auth/refresh — Cấp lại Access Token mới từ Refresh Token
+   */
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)

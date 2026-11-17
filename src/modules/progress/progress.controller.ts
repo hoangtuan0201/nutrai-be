@@ -28,6 +28,9 @@ import type { AuthUser } from '../../common/decorators/current-user.decorator';
 export class ProgressController {
   constructor(private readonly progressService: ProgressService) {}
 
+  /**
+   * GET /progress/overview — Lấy tổng quan tiến độ (BMI, biểu đồ cân nặng/calo, streak)
+   */
   @Get('overview')
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
@@ -41,6 +44,9 @@ export class ProgressController {
     return this.progressService.getProgressOverview(user.id, query.days || 7);
   }
 
+  /**
+   * POST /progress/weight — Ghi nhận hoặc cập nhật cân nặng trong ngày
+   */
   @Post('weight')
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
@@ -54,6 +60,9 @@ export class ProgressController {
     return this.progressService.logWeight(user.id, dto);
   }
 
+  /**
+   * GET /progress/weight-history — Lấy lịch sử các lần ghi nhận cân nặng
+   */
   @Get('weight-history')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get weight log history entries' })
@@ -63,6 +72,9 @@ export class ProgressController {
     return this.progressService.getWeightHistory(user.id);
   }
 
+  /**
+   * PUT /progress/calorie-target — Cập nhật mục tiêu calo tiêu thụ hằng ngày
+   */
   @Put('calorie-target')
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))

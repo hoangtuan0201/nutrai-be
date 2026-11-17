@@ -9,15 +9,16 @@ export class AppController {
     private readonly paymentsService: PaymentsService,
   ) {}
 
+  /**
+   * GET / — Kiểm tra server hoạt động (Health ping)
+   */
   @Get()
   getHello(): string {
     return this.appService.getHello();
   }
 
   /**
-   * Root webhook fallback (`POST /` and `POST /webhooks/sepay`) so that if SePay
-   * is configured with the root tunnel URL (e.g. `https://roamer-arrogant-mace.ngrok-free.dev`),
-   * it receives `200 OK {"success": true}` instead of `404 Not Found`.
+   * POST / — Webhook SePay dự phòng ở root domain (tránh 404 khi tunnel trỏ thẳng về root)
    */
   @Post()
   @HttpCode(HttpStatus.OK)
@@ -28,6 +29,9 @@ export class AppController {
     return this.paymentsService.handleSePayWebhook(payload, authHeader);
   }
 
+  /**
+   * POST /webhooks/sepay — Alias nhận Webhook SePay rút gọn
+   */
   @Post('webhooks/sepay')
   @HttpCode(HttpStatus.OK)
   handleAliasSePayWebhook(

@@ -24,12 +24,18 @@ import { PaymentsService } from './payments.service';
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
+  /**
+   * GET /payments/plans — Lấy danh sách các gói dịch vụ đang mở bán (Free, Pro Monthly/Yearly)
+   */
   @Get('plans')
   @ApiOperation({ summary: 'List all active subscription plans (Free, Pro Monthly, Pro Yearly)' })
   getPlans() {
     return this.paymentsService.getPlans();
   }
 
+  /**
+   * GET /payments/subscription/me — Lấy trạng thái gói Pro hiện tại & lịch sử thanh toán của user
+   */
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Get('subscription/me')
@@ -38,6 +44,9 @@ export class PaymentsController {
     return this.paymentsService.getMySubscription(user.id);
   }
 
+  /**
+   * POST /payments/checkout — Tạo đơn PENDING (hủy đơn chờ cũ) & sinh mã VietQR SePay / Stripe
+   */
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Post('checkout')
@@ -48,6 +57,9 @@ export class PaymentsController {
     return this.paymentsService.createCheckout(user.id, dto);
   }
 
+  /**
+   * GET /payments/:id/status — Kiểm tra trạng thái đơn (tự đối soát SePay API v2 nếu còn PENDING)
+   */
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Get(':id/status')
@@ -58,6 +70,9 @@ export class PaymentsController {
     return this.paymentsService.getPaymentStatus(user.id, id);
   }
 
+  /**
+   * POST /payments/:id/verify — Chủ động đối soát ngay 1 đơn hàng với SePay User API v2
+   */
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Post(':id/verify')
@@ -69,6 +84,9 @@ export class PaymentsController {
     return this.paymentsService.getPaymentStatus(user.id, id);
   }
 
+  /**
+   * POST /payments/:id/cancel — User chủ động hủy phiên thanh toán đang chờ
+   */
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Post(':id/cancel')
@@ -80,6 +98,9 @@ export class PaymentsController {
     return this.paymentsService.cancelPayment(user.id, id);
   }
 
+  /**
+   * POST /payments/sepay/sync — Kéo giao dịch mới từ SePay API v2 và kích hoạt các đơn khớp mã
+   */
   @Post('sepay/sync')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -89,6 +110,9 @@ export class PaymentsController {
     return this.paymentsService.syncSePayTransactions();
   }
 
+  /**
+   * GET /payments/sepay/diagnostics — Kiểm tra kết nối tài khoản ngân hàng & webhook trên SePay
+   */
   @Get('sepay/diagnostics')
   @ApiOperation({
     summary: 'Inspect connected SePay Sandbox/Production bank accounts, webhooks, and recent transactions',
@@ -97,6 +121,9 @@ export class PaymentsController {
     return this.paymentsService.getSePayGatewayDiagnostics();
   }
 
+  /**
+   * POST /payments/webhooks/sepay — Endpoint Webhook chính thức nhận biến động số dư từ SePay
+   */
   @Post('webhooks/sepay')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Official SePay webhook endpoint (returns 200 OK {"success": true})' })
@@ -107,6 +134,9 @@ export class PaymentsController {
     return this.paymentsService.handleSePayWebhook(payload, authHeader);
   }
 
+  /**
+   * POST /payments/webhooks/stripe — Endpoint Webhook chính thức từ Stripe (checkout completed)
+   */
   @Post('webhooks/stripe')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Official Stripe webhook endpoint' })

@@ -36,6 +36,9 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 
+  /**
+   * GET /profile — Lấy hồ sơ sức khỏe, BMR/TDEE và mục tiêu dinh dưỡng hiện tại
+   */
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -52,6 +55,9 @@ export class ProfileController {
     return this.profileService.getProfile(user.id);
   }
 
+  /**
+   * PUT /profile — Cập nhật thông tin cơ thể & tự động tính lại NutritionTarget
+   */
   @Put()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({

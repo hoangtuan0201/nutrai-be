@@ -21,30 +21,45 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 export class AccountController {
   constructor(private readonly accountService: AccountService) {}
 
+  /**
+   * GET /account/me — Lấy thông tin tài khoản hiện tại (avatar, trạng thái Pro)
+   */
   @Get('me')
   @ApiOperation({ summary: 'Get current account info' })
   getMe(@CurrentUser() user: AuthUser) {
     return this.accountService.getMe(user.id);
   }
 
+  /**
+   * POST /account/avatar — Upload ảnh đại diện lên Cloudinary
+   */
   @Post('avatar')
   @ApiOperation({ summary: 'Upload avatar image' })
   uploadAvatar(@CurrentUser() user: AuthUser, @Body() dto: UploadAvatarDto) {
     return this.accountService.uploadAvatar(user.id, dto.imageBase64);
   }
 
+  /**
+   * GET /account/preferences — Lấy tùy chọn nhắc nhở & múi giờ
+   */
   @Get('preferences')
   @ApiOperation({ summary: 'Get notification preferences' })
   getPreferences(@CurrentUser() user: AuthUser) {
     return this.accountService.getPreferences(user.id);
   }
 
+  /**
+   * PATCH /account/preferences — Cập nhật tùy chọn nhắc nhở & múi giờ
+   */
   @Patch('preferences')
   @ApiOperation({ summary: 'Update notification preferences' })
   updatePreferences(@CurrentUser() user: AuthUser, @Body() dto: UpdatePreferencesDto) {
     return this.accountService.updatePreferences(user.id, dto);
   }
 
+  /**
+   * DELETE /account — Vô hiệu hóa (xóa mềm) tài khoản người dùng
+   */
   @Delete()
   @ApiOperation({ summary: 'Deactivate (soft delete) the account' })
   deleteAccount(@CurrentUser() user: AuthUser) {

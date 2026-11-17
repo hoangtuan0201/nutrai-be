@@ -22,6 +22,9 @@ import {
 export class AdminPaymentsController {
   constructor(private readonly paymentsService: AdminPaymentsService) {}
 
+  /**
+   * GET /admin/payments — Danh sách giao dịch thanh toán (lọc trạng thái, cổng, từ khóa)
+   */
   @Get('payments')
   @ApiOperation({ summary: 'List payments (filter by status / gateway, search code / email)' })
   @ApiOkResponse({ description: 'Paginated payment list' })
@@ -29,6 +32,9 @@ export class AdminPaymentsController {
     return this.paymentsService.listPayments(query);
   }
 
+  /**
+   * GET /admin/payments/:id — Chi tiết giao dịch kèm log sự kiện Webhook
+   */
   @Get('payments/:id')
   @ApiOperation({ summary: 'Payment detail with its webhook events' })
   @ApiNotFoundResponse({ description: 'Payment not found' })
@@ -36,6 +42,9 @@ export class AdminPaymentsController {
     return this.paymentsService.getPayment(id);
   }
 
+  /**
+   * POST /admin/payments/:id/manual-activate — Admin kích hoạt Pro thủ công cho đơn lỗi/chuyển muộn
+   */
   @Post('payments/:id/manual-activate')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Manually mark a PENDING/EXPIRED/FAILED payment as paid and activate Pro' })
@@ -49,6 +58,9 @@ export class AdminPaymentsController {
     return this.paymentsService.manualActivate(id, admin.id, dto);
   }
 
+  /**
+   * GET /admin/payment-events — Nhật ký Webhook thô từ SePay / Stripe để đối soát
+   */
   @Get('payment-events')
   @ApiOperation({ summary: 'Webhook logs from SePay / Stripe for reconciliation' })
   @ApiOkResponse({ description: 'Paginated webhook event list' })

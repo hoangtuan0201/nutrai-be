@@ -28,6 +28,9 @@ export class AiController {
     private readonly aiQuotaService: AiQuotaService,
   ) {}
 
+  /**
+   * GET /ai/quota — Lấy hạn mức AI Scan & Chat còn lại trong ngày (Free vs Pro)
+   */
   @Get('quota')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get current user daily AI scan and chat quotas (Free vs Pro)' })
@@ -37,6 +40,9 @@ export class AiController {
     return this.aiQuotaService.getUserDailyQuota(user.id);
   }
 
+  /**
+   * POST /ai/scan-food — Phân tích ảnh món ăn bằng Gemini Vision (có kiểm tra quota)
+   */
   @Post('scan-food')
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))

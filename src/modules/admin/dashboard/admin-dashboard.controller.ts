@@ -9,6 +9,9 @@ import { AdminDashboardService } from './admin-dashboard.service';
 export class AdminDashboardController {
   constructor(private readonly dashboardService: AdminDashboardService) {}
 
+  /**
+   * GET /admin/dashboard/overview — Thống kê user mới, tỷ lệ Free/Pro và doanh thu MRR/ARR
+   */
   @Get('overview')
   @ApiOperation({ summary: 'New user sign-ups (today/week/month) and revenue (MRR/ARR, by gateway)' })
   @ApiOkResponse({ description: 'Dashboard overview metrics' })

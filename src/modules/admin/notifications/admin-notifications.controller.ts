@@ -15,6 +15,9 @@ import {
 export class AdminNotificationsController {
   constructor(private readonly notificationsService: AdminNotificationsService) {}
 
+  /**
+   * GET /admin/notifications/stats — Thống kê số thiết bị đang bật Push Notification
+   */
   @Get('stats')
   @ApiOperation({ summary: 'Active device token counts by platform (FCM/Expo push reach)' })
   @ApiOkResponse({ description: 'Device token statistics' })
@@ -22,6 +25,9 @@ export class AdminNotificationsController {
     return this.notificationsService.getDeviceTokenStats();
   }
 
+  /**
+   * POST /admin/notifications/broadcast — Gửi thông báo đẩy hàng loạt (ALL / FREE / INACTIVE_3D)
+   */
   @Post('broadcast')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Send push + in-app broadcast to ALL, FREE, or INACTIVE_3D users' })
@@ -30,6 +36,9 @@ export class AdminNotificationsController {
     return this.notificationsService.sendBroadcast(admin.id, dto);
   }
 
+  /**
+   * GET /admin/notifications/history — Lịch sử các chiến dịch Broadcast đã gửi
+   */
   @Get('history')
   @ApiOperation({ summary: 'List sent broadcast campaigns with delivery success rate & active token stats' })
   @ApiOkResponse({ description: 'Paginated broadcast history' })

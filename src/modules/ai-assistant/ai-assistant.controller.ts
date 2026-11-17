@@ -27,6 +27,9 @@ import type { AuthUser } from '../../common/decorators/current-user.decorator';
 export class AiAssistantController {
   constructor(private readonly aiAssistantService: AiAssistantService) {}
 
+  /**
+   * GET /ai/assistant/context — Lấy ngữ cảnh dinh dưỡng hôm nay & phiên chat đang mở
+   */
   @Get('context')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -38,6 +41,9 @@ export class AiAssistantController {
     return this.aiAssistantService.getAssistantContext(user.id);
   }
 
+  /**
+   * POST /ai/assistant/chat — Gửi tin nhắn/ảnh cho AI Coach (hỗ trợ tool calling log bữa ăn)
+   */
   @Post('chat')
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
@@ -53,6 +59,9 @@ export class AiAssistantController {
     return this.aiAssistantService.sendChatMessage(user.id, dto);
   }
 
+  /**
+   * GET /ai/assistant/conversations — Danh sách các cuộc hội thoại AI Coach trước đây
+   */
   @Get('conversations')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List past AI Assistant conversations (History drawer)' })
@@ -62,6 +71,9 @@ export class AiAssistantController {
     return this.aiAssistantService.listConversations(user.id);
   }
 
+  /**
+   * GET /ai/assistant/conversations/:id — Mở lại 1 cuộc hội thoại cũ và đặt làm phiên hiện tại
+   */
   @Get('conversations/:id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Open a past conversation and make it the active session' })
@@ -75,6 +87,9 @@ export class AiAssistantController {
     return this.aiAssistantService.openConversation(user.id, id);
   }
 
+  /**
+   * POST /ai/assistant/conversations/new — Khởi tạo phiên trò chuyện AI Coach mới
+   */
   @Post('conversations/new')
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))

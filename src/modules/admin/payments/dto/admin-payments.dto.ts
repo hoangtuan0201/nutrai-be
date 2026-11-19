@@ -18,7 +18,7 @@ export class QueryAdminPaymentsDto extends AdminPaginationDto {
 export const PAYMENT_EVENT_STATUSES = ['PROCESSED', 'IGNORED', 'FAILED'] as const;
 
 export class QueryPaymentEventsDto extends AdminPaginationDto {
-  @ApiPropertyOptional({ example: 'SEPAY', description: 'SEPAY | STRIPE | MANUAL' })
+  @ApiPropertyOptional({ example: 'SEPAY', description: 'SEPAY | MANUAL' })
   @IsOptional()
   @IsString()
   @MaxLength(20)

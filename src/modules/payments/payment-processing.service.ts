@@ -9,7 +9,6 @@ import { PrismaService } from '../../database/prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PaymentsRepository } from './payments.repository';
 import { NormalizedSePayTransaction } from './providers/sepay.provider';
-import { NormalizedStripeEvent } from './providers/stripe.provider';
 
 export interface ProcessedPaymentResult {
   success: boolean;
@@ -197,74 +196,6 @@ export class PaymentProcessingService {
   }
 
   /**
-   * Processes verified Stripe webhook events (`checkout.session.completed`).
-   */
-  async processStripeEvent(event: NormalizedStripeEvent): Promise<ProcessedPaymentResult> {
-    if (event.eventType !== 'checkout.session.completed') {
-      return {
-        success: true,
-        status: 'IGNORED',
-        reason: `Unhandled Stripe event type: ${event.eventType}`,
-      };
-    }
-
-    const existingEvent = await this.repo.findEventByEventId(event.eventId);
-    if (existingEvent && existingEvent.status === 'PROCESSED') {
-      return {
-        success: true,
-        idempotent: true,
-        status: 'COMPLETED',
-        paymentId: existingEvent.paymentId ?? undefined,
-        reason: 'Stripe event already processed',
-      };
-    }
-
-    const payment = event.paymentId
-      ? await this.repo.findPaymentById(event.paymentId)
-      : event.paymentCode
-        ? await this.repo.findPaymentByCode(event.paymentCode)
-        : null;
-
-    if (!payment || !payment.userId) {
-      await this.repo.recordPaymentEvent({
-        provider: 'STRIPE',
-        eventId: event.eventId,
-        eventType: event.eventType,
-        payload: event.raw,
-        status: 'IGNORED',
-        errorMessage: 'No matching payment found for Stripe session',
-      });
-      return {
-        success: true,
-        status: 'IGNORED',
-        reason: 'No matching payment found',
-      };
-    }
-
-    if (payment.status === PaymentStatus.COMPLETED) {
-      return {
-        success: true,
-        idempotent: true,
-        status: 'COMPLETED',
-        paymentId: payment.id,
-        subscriptionId: payment.subscriptionId ?? undefined,
-      };
-    }
-
-    return this.activateSubscriptionAtomically({
-      paymentId: payment.id,
-      userId: payment.userId,
-      planId: payment.planId,
-      provider: 'STRIPE',
-      eventId: event.eventId,
-      eventType: event.eventType,
-      providerTxId: event.sessionId || event.eventId,
-      paidAmount: event.amountTotal || payment.amount,
-      payload: event.raw,
-    });
-  }
-
-  /**
    * Admin manual activation (e.g. user transferred money after the 15-minute QR expired,
    * so the webhook was IGNORED or never matched). Reuses the same atomic activation flow.
    */
@@ -307,7 +238,7 @@ export class PaymentProcessingService {
     paymentId: string;
     userId: string;
     planId?: string | null;
-    provider: 'SEPAY' | 'STRIPE' | 'MANUAL';
+    provider: 'SEPAY' | 'MANUAL';
     eventId: string;
     eventType: string;
     providerTxId: string;

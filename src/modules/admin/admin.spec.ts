@@ -77,7 +77,7 @@ describe('AdminModule (Stage 1)', () => {
             ])
             .mockResolvedValueOnce([
               { paymentMethod: PaymentMethod.SEPAY, _sum: { amount: 980000 }, _count: { _all: 20 } },
-              { paymentMethod: PaymentMethod.STRIPE, _sum: { amount: 399000 }, _count: { _all: 1 } },
+              { paymentMethod: PaymentMethod.BANK_TRANSFER, _sum: { amount: 399000 }, _count: { _all: 1 } },
             ]),
         },
       } as any;

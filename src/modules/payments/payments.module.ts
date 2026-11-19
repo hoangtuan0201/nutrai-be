@@ -8,7 +8,6 @@ import { PaymentsController } from './payments.controller';
 import { PaymentsRepository } from './payments.repository';
 import { PaymentsService } from './payments.service';
 import { SePayProvider } from './providers/sepay.provider';
-import { StripeProvider } from './providers/stripe.provider';
 
 @Module({
   imports: [PrismaModule, AuthModule, NotificationsModule, AiModule],
@@ -18,7 +17,6 @@ import { StripeProvider } from './providers/stripe.provider';
     PaymentsRepository,
     PaymentProcessingService,
     SePayProvider,
-    StripeProvider,
   ],
   exports: [PaymentsService, PaymentsRepository, PaymentProcessingService],
 })

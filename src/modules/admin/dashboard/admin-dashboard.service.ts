@@ -44,7 +44,7 @@ export class AdminDashboardService {
   /**
    * MRR = sum of monthly-normalized price of every active paid subscription
    * (yearly plans are divided by 12). ARR = MRR × 12.
-   * Collected revenue = COMPLETED payments grouped by gateway (SePay / Stripe).
+   * Collected revenue = COMPLETED payments grouped by gateway (SePay / Bank Transfer).
    */
   private async getRevenueMetrics() {
     const { monthStart } = this.getVietnamPeriodStarts();

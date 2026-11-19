@@ -567,10 +567,31 @@ export class NotificationsService {
     try {
       const str = this.formatDateInTimezone(date, timeZone);
       const [year, month, day] = str.split('-').map(Number);
+      const refUtc = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      }).formatToParts(refUtc);
+      const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0);
+      const localAsUtc = Date.UTC(
+        get('year'),
+        get('month') - 1,
+        get('day'),
+        get('hour') % 24,
+        get('minute'),
+        get('second'),
+      );
+      const offsetMs = localAsUtc - refUtc.getTime();
       return {
         dateString: str,
-        startUtc: new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0)),
-        endUtc: new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999)),
+        startUtc: new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0) - offsetMs),
+        endUtc: new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999) - offsetMs),
       };
     } catch {
       const str = date.toISOString().split('T')[0];

@@ -45,7 +45,8 @@ export function generateSecureToken(): string {
   return require('crypto').randomBytes(32).toString('hex');
 }
 
-const DUMMY_HASH = '$2b$12$dummy.hash.to.prevent.timing.attacks.padding';
+// Valid 60-char bcrypt hash (cost 12) so bcrypt.compare executes full key stretching
+const DUMMY_HASH = '$2b$12$dummy.hash.to.prevent.timing.attacks.padding012345678';
 
 /**
  * Returns the password hash to compare against — uses a dummy hash

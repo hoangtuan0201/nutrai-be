@@ -48,6 +48,9 @@ export class AuthService {
   async loginWithGoogle(idToken: string): Promise<AuthResponseDto> {
     const decoded = await this.firebaseAuth.verifyIdToken(idToken);
     const { user, isNewUser } = await this.repo.upsertGoogleUser(decoded);
+    if (!user.isActive) {
+      throw new UnauthorizedException('Your account has been deactivated');
+    }
     const tokens = await issueTokens(this.jwtService, this.config, user.id, user.email, user.role);
 
     this.logger.log(`Google login: ${user.email} (${isNewUser ? 'NEW' : 'EXISTING'})`);

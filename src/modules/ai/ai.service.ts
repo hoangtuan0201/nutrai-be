@@ -7,9 +7,9 @@ import { FoodScanResponse, DetectedFoodScanItem } from './interfaces/food-scan-r
 export class AiService {
   private readonly logger = new Logger(AiService.name);
   private readonly apiKey: string;
-  // Models evaluated: gemini-flash-lite-latest (fastest & lowest cost) with automatic fallback to gemini-3.5-flash-lite
+  // Models evaluated: gemini-flash-lite-latest (fastest & lowest cost) with automatic fallback to gemini-2.5-flash
   private readonly primaryModel = 'gemini-flash-lite-latest';
-  private readonly fallbackModel = 'gemini-3.5-flash-lite';
+  private readonly fallbackModel = 'gemini-2.5-flash';
 
   constructor(private readonly configService: ConfigService) {
     this.apiKey = this.configService.get<string>('GEMINI_API_SCANFOOD') || '';
@@ -105,7 +105,7 @@ If no food is visible in the image, return:
     } catch (err: any) {
       this.logger.error(`Gemini API call failed: ${err.message}`, err.stack);
       throw new InternalServerErrorException(
-        `Failed to analyze food image with AI: ${err.message || 'Gemini service unavailable'}`,
+        'Failed to analyze food image with AI. Please try again shortly.',
       );
     }
 

@@ -259,20 +259,7 @@ export class NotificationsScheduler {
   }
 
   private getDayRangeInTimezone(date: Date, timeZone: string): { startUtc: Date; endUtc: Date } {
-    try {
-      const str = new Intl.DateTimeFormat('en-CA', {
-        timeZone,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      }).format(date);
-      const [year, month, day] = str.split('-').map(Number);
-      return {
-        startUtc: new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0)),
-        endUtc: new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999)),
-      };
-    } catch {
-      return getVietnamDayRange();
-    }
+    const { startUtc, endUtc } = this.notificationsService.getDayRangeInTimezone(date, timeZone);
+    return { startUtc, endUtc };
   }
 }

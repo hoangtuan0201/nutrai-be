@@ -159,6 +159,7 @@ export class MealsRepository {
           await tx.mealItem.createMany({
             data: dto.items.map((item, index) => ({
               mealId: id,
+              foodId: item.foodId || null,
               foodName: item.foodName,
               portionDescription: item.portionDescription,
               quantity: item.quantity,

@@ -1,5 +1,6 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as crypto from 'crypto';
 import { SePayWebhookDto } from '../dto/sepay-webhook.dto';
 
 export interface SePayQrInfo {
@@ -79,7 +80,12 @@ export class SePayProvider {
    * If `SEPAY_WEBHOOK_API_KEY` is not set (e.g. `No_Authen` mode in SePay Sandbox), allows the request.
    */
   verifyWebhookAuth(authHeader?: string): void {
+    const isProd = this.config.get<string>('NODE_ENV') === 'production';
+
     if (!this.webhookApiKey) {
+      if (isProd) {
+        throw new UnauthorizedException('SEPAY_WEBHOOK_API_KEY is not configured in production');
+      }
       return;
     }
 
@@ -88,7 +94,9 @@ export class SePayProvider {
     }
 
     const token = authHeader.replace(/^(Apikey|Bearer)\s+/i, '').trim();
-    if (token !== this.webhookApiKey) {
+    const tokenBuf = Buffer.from(token, 'utf8');
+    const expectedBuf = Buffer.from(this.webhookApiKey, 'utf8');
+    if (tokenBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(tokenBuf, expectedBuf)) {
       throw new UnauthorizedException('Invalid SePay webhook API key');
     }
   }

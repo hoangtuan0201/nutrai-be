@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { BillingPeriod, PaymentMethod, PaymentStatus } from '@prisma/client';
 import * as crypto from 'crypto';
 import { CheckoutPaymentMethod, CreateCheckoutDto } from './dto/create-checkout.dto';
@@ -84,9 +84,15 @@ export class PaymentsService {
       dto.billingPeriod ?? BillingPeriod.MONTHLY,
     );
 
-    const paymentCode = dto.customPaymentCode
-      ? dto.customPaymentCode.trim().toUpperCase()
-      : this.generatePaymentCode();
+    if (!plan.isActive || plan.price <= 0) {
+      throw new BadRequestException('Selected plan is not available for paid checkout');
+    }
+
+    const allowCustomCode = process.env.NODE_ENV !== 'production';
+    const paymentCode =
+      allowCustomCode && dto.customPaymentCode
+        ? dto.customPaymentCode.trim().toUpperCase()
+        : this.generatePaymentCode();
 
     // QR expires in 15 minutes
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);

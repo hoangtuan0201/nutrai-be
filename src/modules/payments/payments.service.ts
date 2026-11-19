@@ -6,7 +6,6 @@ import { SePayWebhookDto } from './dto/sepay-webhook.dto';
 import { PaymentProcessingService } from './payment-processing.service';
 import { PaymentsRepository } from './payments.repository';
 import { SePayProvider } from './providers/sepay.provider';
-import { StripeProvider } from './providers/stripe.provider';
 import { AiQuotaService } from '../ai/ai-quota.service';
 
 @Injectable()
@@ -16,7 +15,6 @@ export class PaymentsService {
   constructor(
     private readonly repo: PaymentsRepository,
     private readonly sepayProvider: SePayProvider,
-    private readonly stripeProvider: StripeProvider,
     private readonly processingService: PaymentProcessingService,
     private readonly aiQuotaService: AiQuotaService,
   ) {}
@@ -78,11 +76,9 @@ export class PaymentsService {
 
   /**
    * Step 1 - Step 3 of Payment Flow:
-   * Creates a PENDING Payment and returns VietQR transfer instructions (SePay)
-   * or Checkout Session URL (Stripe).
+   * Creates a PENDING Payment and returns VietQR transfer instructions (SePay).
    */
   async createCheckout(userId: string, dto: CreateCheckoutDto) {
-    const method = dto.paymentMethod ?? CheckoutPaymentMethod.SEPAY;
     const plan = await this.repo.findPlanByIdOrPeriod(
       dto.planId,
       dto.billingPeriod ?? BillingPeriod.MONTHLY,
@@ -103,37 +99,12 @@ export class PaymentsService {
       planId: plan.id,
       amount: plan.price,
       currency: plan.currency || 'VND',
-      paymentMethod: method === CheckoutPaymentMethod.STRIPE ? PaymentMethod.STRIPE : PaymentMethod.SEPAY,
+      paymentMethod: PaymentMethod.SEPAY,
       paymentCode,
       expiresAt,
     });
 
-    if (method === CheckoutPaymentMethod.STRIPE) {
-      const user = await this.repo.findUserById(userId);
-      const stripeSession = await this.stripeProvider.createCheckoutSession({
-        paymentId: payment.id,
-        paymentCode,
-        userId,
-        userEmail: user?.email,
-        planName: plan.name,
-        amount: payment.amount,
-        currency: payment.currency,
-      });
-
-      return {
-        paymentId: payment.id,
-        paymentCode,
-        status: payment.status,
-        paymentMethod: 'STRIPE',
-        amount: payment.amount,
-        currency: payment.currency,
-        expiresAt: payment.expiresAt,
-        plan,
-        stripe: stripeSession,
-      };
-    }
-
-    // Default: SePay VietQR
+    // SePay VietQR
     const qrInfo = this.sepayProvider.generateQr({
       amount: payment.amount,
       paymentCode,
@@ -234,30 +205,6 @@ export class PaymentsService {
   }
 
   /**
-   * Handles incoming webhook from Stripe.
-   */
-  async handleStripeWebhook(
-    payload: Record<string, any>,
-    rawBody?: string,
-    stripeSignature?: string,
-  ) {
-    const normalized = this.stripeProvider.verifyAndNormalizeWebhook(
-      payload,
-      rawBody,
-      stripeSignature,
-    );
-    this.logger.log(
-      `📥 Received Stripe Webhook: eventId=${normalized.eventId}, type=${normalized.eventType}`,
-    );
-
-    const result = await this.processingService.processStripeEvent(normalized);
-    return {
-      received: true,
-      ...result,
-    };
-  }
-
-  /**
    * Actively pulls the latest transactions from SePay User API v2 (`GET /v2/transactions`)
    * and processes any matching PENDING payments.
    */
@@ -298,7 +245,6 @@ export class PaymentsService {
       bankAccounts,
       webhooks,
       recentTransactions,
-      stripeConfigured: this.stripeProvider.isConfigured(),
     };
   }
 }

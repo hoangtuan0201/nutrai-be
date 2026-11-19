@@ -7,14 +7,13 @@ import {
   HttpStatus,
   Param,
   Post,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import type { Request } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { AdminOnly } from '../admin/common/admin-only.decorator';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
 import { SePayWebhookDto } from './dto/sepay-webhook.dto';
 import { PaymentsService } from './payments.service';
@@ -45,13 +44,13 @@ export class PaymentsController {
   }
 
   /**
-   * POST /payments/checkout — Tạo đơn PENDING (hủy đơn chờ cũ) & sinh mã VietQR SePay / Stripe
+   * POST /payments/checkout — Tạo đơn PENDING (hủy đơn chờ cũ) & sinh mã VietQR SePay
    */
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Post('checkout')
   @ApiOperation({
-    summary: 'Create a PENDING payment and generate VietQR (SePay) or Checkout Session (Stripe)',
+    summary: 'Create a PENDING payment and generate VietQR (SePay)',
   })
   createCheckout(@CurrentUser() user: AuthUser, @Body() dto: CreateCheckoutDto) {
     return this.paymentsService.createCheckout(user.id, dto);
@@ -101,6 +100,7 @@ export class PaymentsController {
   /**
    * POST /payments/sepay/sync — Kéo giao dịch mới từ SePay API v2 và kích hoạt các đơn khớp mã
    */
+  @AdminOnly()
   @Post('sepay/sync')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -113,6 +113,7 @@ export class PaymentsController {
   /**
    * GET /payments/sepay/diagnostics — Kiểm tra kết nối tài khoản ngân hàng & webhook trên SePay
    */
+  @AdminOnly()
   @Get('sepay/diagnostics')
   @ApiOperation({
     summary: 'Inspect connected SePay Sandbox/Production bank accounts, webhooks, and recent transactions',
@@ -132,20 +133,5 @@ export class PaymentsController {
     @Headers('authorization') authHeader?: string,
   ) {
     return this.paymentsService.handleSePayWebhook(payload, authHeader);
-  }
-
-  /**
-   * POST /payments/webhooks/stripe — Endpoint Webhook chính thức từ Stripe (checkout completed)
-   */
-  @Post('webhooks/stripe')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Official Stripe webhook endpoint' })
-  handleStripeWebhook(
-    @Body() payload: Record<string, any>,
-    @Req() req: Request & { rawBody?: Buffer },
-    @Headers('stripe-signature') stripeSignature?: string,
-  ) {
-    const rawBody = req.rawBody ? req.rawBody.toString('utf8') : JSON.stringify(payload);
-    return this.paymentsService.handleStripeWebhook(payload, rawBody, stripeSignature);
   }
 }

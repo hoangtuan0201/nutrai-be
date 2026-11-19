@@ -6,10 +6,17 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { json, urlencoded } from 'express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  
-  // Support up to 25MB payloads for AI multimodal image uploads
-  app.use(json({ limit: '25mb' }));
+  const app = await NestFactory.create(AppModule, { rawBody: true });
+
+  // Support up to 25MB payloads for AI multimodal image uploads while preserving rawBody for webhook HMAC verification
+  app.use(
+    json({
+      limit: '25mb',
+      verify: (req, _res, buf) => {
+        (req as { rawBody?: Buffer }).rawBody = buf;
+      },
+    }),
+  );
   app.use(urlencoded({ extended: true, limit: '25mb' }));
 
   // Custom Validation Pipe

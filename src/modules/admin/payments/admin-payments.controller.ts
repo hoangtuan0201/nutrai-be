@@ -59,10 +59,10 @@ export class AdminPaymentsController {
   }
 
   /**
-   * GET /admin/payment-events — Nhật ký Webhook thô từ SePay / Stripe để đối soát
+   * GET /admin/payment-events — Nhật ký Webhook thô từ SePay để đối soát
    */
   @Get('payment-events')
-  @ApiOperation({ summary: 'Webhook logs from SePay / Stripe for reconciliation' })
+  @ApiOperation({ summary: 'Webhook logs from SePay for reconciliation' })
   @ApiOkResponse({ description: 'Paginated webhook event list' })
   listPaymentEvents(@Query() query: QueryPaymentEventsDto) {
     return this.paymentsService.listPaymentEvents(query);

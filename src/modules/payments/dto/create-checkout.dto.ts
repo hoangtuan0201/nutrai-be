@@ -4,7 +4,6 @@ import { BillingPeriod } from '@prisma/client';
 
 export enum CheckoutPaymentMethod {
   SEPAY = 'SEPAY',
-  STRIPE = 'STRIPE',
 }
 
 export class CreateCheckoutDto {
@@ -28,7 +27,7 @@ export class CreateCheckoutDto {
   @ApiProperty({
     enum: CheckoutPaymentMethod,
     default: CheckoutPaymentMethod.SEPAY,
-    description: 'Payment gateway provider: SEPAY (VietQR) or STRIPE',
+    description: 'Payment gateway provider: SEPAY (VietQR)',
   })
   @IsOptional()
   @IsEnum(CheckoutPaymentMethod)

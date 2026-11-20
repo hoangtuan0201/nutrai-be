@@ -24,6 +24,7 @@ import { AccountModule } from './modules/account/account.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { MailModule } from './modules/mail/mail.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { AdminModule } from './modules/admin/admin.module';
     NotificationsModule,
     PaymentsModule,
     AdminModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService],

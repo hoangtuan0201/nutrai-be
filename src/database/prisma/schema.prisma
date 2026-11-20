@@ -37,9 +37,11 @@ model User {
   firebaseUid              String?      @unique
   isActive                 Boolean      @default(true)
   emailVerified            Boolean      @default(false)
+  emailVerificationToken   String?
+  emailVerificationExpires DateTime?
 
   // Token đặt lại mật khẩu trực tiếp trong User
-  passwordResetToken       String?      @unique
+  passwordResetToken       String?
   passwordResetExpires     DateTime?
 
   createdAt                DateTime     @default(now())

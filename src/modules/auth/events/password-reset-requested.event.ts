@@ -12,7 +12,9 @@ export class PasswordResetRequestedEvent {
     public readonly email: string,
     /** Secure random token (64 hex chars) stored in PasswordReset table */
     public readonly resetToken: string,
-    /** Token expiry so the email can display "link valid for X minutes" */
+    /** Token expiry so the email can display "valid for X minutes" */
     public readonly expiresAt: Date,
+    /** Optional user display name for personalized greeting */
+    public readonly name: string | null = null,
   ) {}
 }

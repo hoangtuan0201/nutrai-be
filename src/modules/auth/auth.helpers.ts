@@ -45,6 +45,12 @@ export function generateSecureToken(): string {
   return require('crypto').randomBytes(32).toString('hex');
 }
 
+/** Generates a cryptographically secure 6-digit numeric OTP code (100000–999999). */
+export function generateOtpCode(): string {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  return String(require('crypto').randomInt(100000, 1000000));
+}
+
 // Valid 60-char bcrypt hash (cost 12) so bcrypt.compare executes full key stretching
 const DUMMY_HASH = '$2b$12$dummy.hash.to.prevent.timing.attacks.padding012345678';
 

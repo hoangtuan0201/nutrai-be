@@ -12,6 +12,8 @@ import { GoogleLoginDto } from './dto/google-login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto, VerifyResetCodeDto } from './dto/reset-password.dto';
+import { ResendVerificationDto, VerifyEmailDto } from './dto/verify-email.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { IsString, IsNotEmpty } from 'class-validator';
@@ -68,19 +70,70 @@ export class AuthController {
   }
 
   /**
-   * POST /auth/forgot-password — Gửi yêu cầu đặt lại mật khẩu qua email
+   * POST /auth/forgot-password — Gửi mã 6 chữ số đặt lại mật khẩu qua email
    */
   @Public()
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Request a password reset email',
+    summary: 'Request a 6-digit password reset code via email',
     description:
       'Always returns 200 regardless of whether the email exists (prevents user enumeration).',
   })
-  @ApiResponse({ status: 200, description: 'Reset email queued if account exists' })
+  @ApiResponse({ status: 200, description: 'Reset code sent if account exists' })
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto.email);
+  }
+
+  /**
+   * POST /auth/verify-reset-code — Kiểm tra mã OTP đặt lại mật khẩu trước khi nhập mật khẩu mới
+   */
+  @Public()
+  @Post('verify-reset-code')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify 6-digit password reset code before setting a new password' })
+  @ApiResponse({ status: 200, description: 'Reset code is valid' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired reset code' })
+  async verifyResetCode(@Body() dto: VerifyResetCodeDto) {
+    return this.authService.verifyResetCode(dto.email, dto.code);
+  }
+
+  /**
+   * POST /auth/reset-password — Xác thực mã OTP và cập nhật mật khẩu mới
+   */
+  @Public()
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Reset password using the 6-digit code sent via email' })
+  @ApiResponse({ status: 200, description: 'Password updated successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired reset code' })
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.email, dto.code, dto.newPassword);
+  }
+
+  /**
+   * POST /auth/verify-email — Xác thực email bằng mã OTP 6 chữ số
+   */
+  @Public()
+  @Post('verify-email')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify email address using the 6-digit code' })
+  @ApiResponse({ status: 200, description: 'Email verified successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired verification code' })
+  async verifyEmail(@Body() dto: VerifyEmailDto) {
+    return this.authService.verifyEmail(dto.email, dto.code);
+  }
+
+  /**
+   * POST /auth/resend-verification — Gửi lại mã xác thực email mới
+   */
+  @Public()
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Resend a new 6-digit email verification code' })
+  @ApiResponse({ status: 200, description: 'Verification code re-sent if account is unverified' })
+  async resendVerification(@Body() dto: ResendVerificationDto) {
+    return this.authService.resendVerificationEmail(dto.email);
   }
 
   // ─── Google (Firebase) ────────────────────────────────────────

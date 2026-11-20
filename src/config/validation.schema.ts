@@ -26,7 +26,15 @@ export const envSchema = z.object({
 
   // Auth behaviour
   BCRYPT_ROUNDS: z.coerce.number().int().min(10).max(14).default(12),
-  PASSWORD_RESET_EXPIRES_MINUTES: z.coerce.number().int().positive().default(30),
+  PASSWORD_RESET_EXPIRES_MINUTES: z.coerce.number().int().positive().default(15),
+  EMAIL_VERIFICATION_EXPIRES_MINUTES: z.coerce.number().int().positive().default(15),
+
+  // SMTP Email (Gmail App Password)
+  SMTP_HOST: z.string().default('smtp.gmail.com'),
+  SMTP_PORT: z.coerce.number().int().default(587),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_FROM: z.string().optional(),
 
   // App URLs
   APP_BASE_URL: z.string().url().default('https://app.nutraai.com'),

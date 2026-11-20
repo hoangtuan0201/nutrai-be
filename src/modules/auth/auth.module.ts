@@ -9,8 +9,12 @@ import { FirebaseModule } from '../firebase/firebase.module';
 import { FirebaseAuthService } from '../firebase/firebase-auth.service';
 import { PrismaModule } from '../../database/prisma/prisma.module';
 import { PasswordResetRequestedHandler } from './events/password-reset-requested.handler';
+import { EmailVerificationRequestedHandler } from './events/email-verification-requested.handler';
 
-const EventHandlers = [PasswordResetRequestedHandler];
+const EventHandlers = [
+  PasswordResetRequestedHandler,
+  EmailVerificationRequestedHandler,
+];
 
 @Module({
   imports: [

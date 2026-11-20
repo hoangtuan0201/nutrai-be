@@ -10,6 +10,7 @@ export type UserRow = {
   passwordHash: string | null;
   authProvider: string;
   isActive: boolean;
+  emailVerified: boolean;
 };
 
 @Injectable()
@@ -21,7 +22,26 @@ export class AuthRepository {
       where: { email },
       select: {
         id: true, email: true, name: true, role: true,
-        passwordHash: true, authProvider: true, isActive: true,
+        passwordHash: true, authProvider: true, isActive: true, emailVerified: true,
+      },
+    });
+  }
+
+  findByEmailWithTokens(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        authProvider: true,
+        isActive: true,
+        emailVerified: true,
+        emailVerificationToken: true,
+        emailVerificationExpires: true,
+        passwordResetToken: true,
+        passwordResetExpires: true,
       },
     });
   }
@@ -50,7 +70,7 @@ export class AuthRepository {
       },
       select: {
         id: true, email: true, name: true, role: true,
-        passwordHash: true, authProvider: true, isActive: true,
+        passwordHash: true, authProvider: true, isActive: true, emailVerified: true,
       },
     });
   }
@@ -68,7 +88,7 @@ export class AuthRepository {
     if (!existing) {
       const user = await this.prisma.user.create({
         data: { email, name, avatarUrl, firebaseUid, authProvider: 'GOOGLE', role: 'USER', isActive: true, emailVerified: true },
-        select: { id: true, email: true, name: true, role: true, passwordHash: true, authProvider: true, isActive: true },
+        select: { id: true, email: true, name: true, role: true, passwordHash: true, authProvider: true, isActive: true, emailVerified: true },
       });
       return { user, isNewUser: true };
     }
@@ -76,9 +96,41 @@ export class AuthRepository {
     const user = await this.prisma.user.update({
       where: { id: existing.id },
       data: { firebaseUid, emailVerified: true, ...(name && { name }), ...(avatarUrl && { avatarUrl }) },
-      select: { id: true, email: true, name: true, role: true, passwordHash: true, authProvider: true, isActive: true },
+      select: { id: true, email: true, name: true, role: true, passwordHash: true, authProvider: true, isActive: true, emailVerified: true },
     });
     return { user, isNewUser: false };
+  }
+
+  setEmailVerificationCode(userId: string, token: string, expiresAt: Date) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        emailVerificationToken: token,
+        emailVerificationExpires: expiresAt,
+      },
+    });
+  }
+
+  markEmailVerified(userId: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        emailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
+      },
+    });
+  }
+
+  updatePasswordAndClearReset(userId: string, passwordHash: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash,
+        passwordResetToken: null,
+        passwordResetExpires: null,
+      },
+    });
   }
 
   invalidatePendingResets(userId: string) {

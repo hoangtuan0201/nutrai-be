@@ -49,7 +49,6 @@ model User {
   deletedAt                DateTime?
 
   // Relations
-  refreshTokens            RefreshToken[]
   deviceTokens             DeviceToken[]
   profile                  UserProfile?
   nutritionTargets         NutritionTarget[]
@@ -62,20 +61,6 @@ model User {
   notifications            Notification[]
 
   @@map("users")
-}
-
-model RefreshToken {
-  id         String   @id @default(uuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token      String   @unique
-  deviceInfo String?
-  expiresAt  DateTime
-  isRevoked  Boolean  @default(false)
-  createdAt  DateTime @default(now())
-
-  @@index([userId])
-  @@map("refresh_tokens")
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -372,7 +357,6 @@ model UserSubscription {
   planId          String
   plan            SubscriptionPlan   @relation(fields: [planId], references: [id])
   status          SubscriptionStatus
-  googlePlayToken String?
   transactionId   String?            @unique
   startsAt        DateTime
   expiresAt       DateTime

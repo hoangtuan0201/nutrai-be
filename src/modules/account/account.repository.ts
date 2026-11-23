@@ -75,10 +75,9 @@ export class AccountRepository {
     });
   }
 
-  /** Soft delete: deactivate account and revoke all sessions. */
+  /** Soft delete: deactivate account and disable push tokens. */
   async softDelete(userId: string) {
     await this.prisma.$transaction([
-      this.prisma.refreshToken.updateMany({ where: { userId }, data: { isRevoked: true } }),
       this.prisma.deviceToken.updateMany({ where: { userId }, data: { isActive: false } }),
       this.prisma.user.update({
         where: { id: userId },

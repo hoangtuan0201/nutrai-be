@@ -90,7 +90,6 @@ async function main() {
   await prisma.food.deleteMany();
   await prisma.nutritionTarget.deleteMany();
   await prisma.userProfile.deleteMany();
-  await prisma.refreshToken.deleteMany();
   await prisma.user.deleteMany();
 
   // ═══════════════════════════════════════════════════════
@@ -1182,7 +1181,6 @@ async function main() {
   // ── Summary ──────────────────────────────────────────
   const counts = {
     users: await prisma.user.count(),
-    refreshTokens: await prisma.refreshToken.count(),
     deviceTokens: await prisma.deviceToken.count(),
     profiles: await prisma.userProfile.count(),
     nutritionTargets: await prisma.nutritionTarget.count(),

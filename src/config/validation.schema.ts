@@ -18,11 +18,9 @@ export const envSchema = z.object({
   FIREBASE_CLIENT_EMAIL: z.string().optional(),
   FIREBASE_PRIVATE_KEY: z.string().optional(),
 
-  // JWT (internal tokens)
+  // JWT (internal access token)
   JWT_SECRET: z.string().min(16, 'JWT_SECRET must be at least 16 characters'),
   JWT_EXPIRES_IN: z.string().default('7d'),
-  JWT_REFRESH_SECRET: z.string().min(16, 'JWT_REFRESH_SECRET must be at least 16 characters'),
-  JWT_REFRESH_EXPIRES_IN: z.string().default('30d'),
 
   // Auth behaviour
   BCRYPT_ROUNDS: z.coerce.number().int().min(10).max(14).default(12),

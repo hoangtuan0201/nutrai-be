@@ -30,9 +30,8 @@ export type { JwtPayload };
 /**
  * AuthService — orchestrates:
  *   1. Google Sign-In (Firebase)
- *   2. Email/Password register & login
- *   3. Forgot-password token generation
- *   4. Refresh token → new access token
+ *   2. Email/Password register & login (stateless JWT access token)
+ *   3. Email verification & forgot-password 6-digit OTP flows
  */
 @Injectable()
 export class AuthService {
@@ -262,30 +261,6 @@ export class AuthService {
     return {
       message: 'Password has been reset successfully. You can now sign in with your new password.',
     };
-  }
-
-  // ─── 5. Refresh Token ────────────────────────────────────────────
-
-  async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
-    let payload: JwtPayload;
-    try {
-      payload = await this.jwtService.verifyAsync<JwtPayload>(refreshToken, {
-        secret: this.config.get<string>('jwt.refreshSecret'),
-      });
-    } catch {
-      throw new UnauthorizedException('Invalid or expired refresh token');
-    }
-
-    const user = await this.repo.findById(payload.sub);
-    if (!user || !user.isActive) {
-      throw new UnauthorizedException('User account not found or deactivated');
-    }
-
-    const accessToken = await this.jwtService.signAsync(
-      { sub: user.id, email: user.email, role: user.role },
-      { secret: this.config.get<string>('jwt.secret'), expiresIn: '7d' },
-    );
-    return { accessToken };
   }
 }
 

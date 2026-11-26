@@ -9,14 +9,13 @@ export interface JwtPayload {
   exp?: number;
 }
 
-export interface TokenPair {
+export interface AuthTokenResult {
   accessToken: string;
-  refreshToken: string;
 }
 
 /**
- * Issues a JWT access + refresh token pair.
- * Reads secrets and expiry config from ConfigService.
+ * Issues a stateless JWT access token.
+ * Reads secret and expiry config from ConfigService.
  */
 export async function issueTokens(
   jwtService: JwtService,
@@ -24,19 +23,13 @@ export async function issueTokens(
   userId: string,
   email: string,
   role: string,
-): Promise<TokenPair> {
+): Promise<AuthTokenResult> {
   const payload = { sub: userId, email, role };
-  const [accessToken, refreshToken] = await Promise.all([
-    jwtService.signAsync(payload, {
-      secret: config.get<string>('jwt.secret'),
-      expiresIn: (config.get<string>('jwt.expiresIn') ?? '7d') as never,
-    }),
-    jwtService.signAsync(payload, {
-      secret: config.get<string>('jwt.refreshSecret'),
-      expiresIn: (config.get<string>('jwt.refreshExpiresIn') ?? '30d') as never,
-    }),
-  ]);
-  return { accessToken, refreshToken };
+  const accessToken = await jwtService.signAsync(payload, {
+    secret: config.get<string>('jwt.secret'),
+    expiresIn: (config.get<string>('jwt.expiresIn') ?? '7d') as never,
+  });
+  return { accessToken };
 }
 
 /** Generates a cryptographically secure random hex token. */

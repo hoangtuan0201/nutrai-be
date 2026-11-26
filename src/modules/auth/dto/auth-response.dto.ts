@@ -1,11 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class AuthTokensDto {
-  @ApiProperty({ description: 'Short-lived JWT access token (7d)' })
+  @ApiProperty({ description: 'Stateless JWT access token (7d)' })
   accessToken: string;
-
-  @ApiProperty({ description: 'Long-lived refresh token (30d)' })
-  refreshToken: string;
 }
 
 export class AuthResponseDto {

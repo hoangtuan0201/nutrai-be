@@ -4,7 +4,6 @@ import {
   Body,
   HttpCode,
   HttpStatus,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -16,15 +15,6 @@ import { ResetPasswordDto, VerifyResetCodeDto } from './dto/reset-password.dto';
 import { ResendVerificationDto, VerifyEmailDto } from './dto/verify-email.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { Public } from '../../common/decorators/public.decorator';
-import { IsString, IsNotEmpty } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
-
-class RefreshTokenDto {
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  refreshToken: string;
-}
 
 /**
  * AuthController
@@ -32,7 +22,6 @@ class RefreshTokenDto {
  * POST /auth/register        — Email + password registration
  * POST /auth/login           — Email + password login
  * POST /auth/google          — Google (Firebase) Sign-In
- * POST /auth/refresh         — Refresh access token
  * POST /auth/forgot-password — Initiate password reset
  */
 @ApiTags('Auth')
@@ -57,7 +46,7 @@ export class AuthController {
   }
 
   /**
-   * POST /auth/login — Đăng nhập bằng Email & Password (trả về JWT Access/Refresh)
+   * POST /auth/login — Đăng nhập bằng Email & Password (trả về stateless JWT Access Token)
    */
   @Public()
   @Post('login')
@@ -154,24 +143,5 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Invalid or expired Firebase ID token' })
   loginWithGoogle(@Body() dto: GoogleLoginDto): Promise<AuthResponseDto> {
     return this.authService.loginWithGoogle(dto.idToken);
-  }
-
-  // ─── Token management ─────────────────────────────────────────
-
-  /**
-   * POST /auth/refresh — Cấp lại Access Token mới từ Refresh Token
-   */
-  @Public()
-  @Post('refresh')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Refresh access token' })
-  @ApiResponse({ status: 200, description: 'New access token issued' })
-  @ApiResponse({ status: 401, description: 'Invalid or expired refresh token' })
-  async refresh(@Body() dto: RefreshTokenDto) {
-    try {
-      return await this.authService.refreshToken(dto.refreshToken);
-    } catch {
-      throw new UnauthorizedException('Invalid or expired refresh token');
-    }
   }
 }

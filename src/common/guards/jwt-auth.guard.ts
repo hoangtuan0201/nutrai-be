@@ -11,12 +11,11 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { JwtPayload } from '../../modules/auth/auth.service';
 
 /**
- * JwtAuthGuard — validates internal JWT tokens issued by AuthService.
+ * JwtAuthGuard — Guard xác thực JWT access token cho các route cần đăng nhập.
  *
- * - Reads the Bearer token from Authorization header
- * - Verifies signature + expiry using our JWT_SECRET
- * - Attaches the decoded payload as request.user
- * - Respects the @Public() decorator to skip auth for public routes
+ * - Đọc Bearer token từ header `Authorization` và verify bằng `JWT_SECRET`.
+ * - Gắn payload đã giải mã vào `request.user` (để `@CurrentUser()` và `RolesGuard` sử dụng).
+ * - Bỏ qua kiểm tra nếu route có gắn `@Public()`.
  */
 @Injectable()
 export class JwtAuthGuard implements CanActivate {

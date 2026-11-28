@@ -8,7 +8,7 @@ import {
 } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/decorators/current-user.decorator';
-import { AdminOnly } from '../common/admin-only.decorator';
+import { AdminOnly } from '../../../common/decorators/admin-only.decorator';
 import { AdminPaymentsService } from './admin-payments.service';
 import {
   ManualActivateDto,

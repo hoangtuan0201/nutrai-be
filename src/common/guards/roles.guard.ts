@@ -1,11 +1,13 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, ForbiddenException, SetMetadata } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ROLES_KEY } from '../decorators/roles.decorator';
 import { AuthUser } from '../decorators/current-user.decorator';
 
+export const ROLES_KEY = 'roles';
+export const Roles = (...roles: string[]) => SetMetadata(ROLES_KEY, roles);
+
 /**
- * RolesGuard — must run AFTER JwtAuthGuard (which attaches `request.user.role`).
- * Allows the request only when the user's role is listed in @Roles(...).
+ * RolesGuard — Guard kiểm tra phân quyền theo `@Roles(...)` (dùng bên trong `@AdminOnly()`).
+ * Lưu ý: Phải chạy SAU `JwtAuthGuard` để `request.user.role` đã tồn tại.
  */
 @Injectable()
 export class RolesGuard implements CanActivate {

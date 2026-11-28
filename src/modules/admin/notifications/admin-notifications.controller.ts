@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query } from '@nestj
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/decorators/current-user.decorator';
-import { AdminOnly } from '../common/admin-only.decorator';
+import { AdminOnly } from '../../../common/decorators/admin-only.decorator';
 import { AdminNotificationsService } from './admin-notifications.service';
 import {
   BroadcastNotificationDto,

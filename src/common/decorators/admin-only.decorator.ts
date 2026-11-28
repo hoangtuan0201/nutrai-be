@@ -1,13 +1,13 @@
 import { applyDecorators, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiForbiddenResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../../../common/guards/roles.guard';
-import { Roles } from '../../../common/decorators/roles.decorator';
-import { ROLES } from '../../../common/constants';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { Roles, RolesGuard } from '../guards/roles.guard';
+import { ROLES } from '../constants';
 
 /**
- * Protects a controller/handler so only authenticated ADMIN users can access it.
- * Order matters: JwtAuthGuard attaches request.user, then RolesGuard checks the role.
+ * @AdminOnly() — Decorator bảo vệ controller/route chỉ cho phép tài khoản `ADMIN` truy cập.
+ *
+ * Thứ tự thực thi: `JwtAuthGuard` (xác thực token & gắn `request.user`) -> `RolesGuard` (kiểm tra `role === 'ADMIN'`).
  */
 export const AdminOnly = () =>
   applyDecorators(

@@ -2,6 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 
+/**
+ * CloudinaryService — Bọc SDK Cloudinary để upload và quản lý ảnh (ảnh bữa ăn, món ăn admin, ảnh chat AI).
+ */
 @Injectable()
 export class CloudinaryService {
   private readonly logger = new Logger(CloudinaryService.name);

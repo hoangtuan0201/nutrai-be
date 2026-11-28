@@ -1,9 +1,9 @@
 import { SetMetadata } from '@nestjs/common';
 
 /**
- * @Public() decorator — marks a route as publicly accessible (no JWT required).
+ * @Public() — Đánh dấu route công khai để `JwtAuthGuard` bỏ qua kiểm tra Bearer token.
  *
- * Usage:
+ * Ví dụ:
  *   @Public()
  *   @Post('auth/google')
  *   loginWithGoogle() { ... }

@@ -2,6 +2,10 @@ import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/commo
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
+/**
+ * RedisService — Quản lý kết nối `ioredis` và thao tác cache JSON (`getJson`, `setJson`, `delByPattern`).
+ * Hoạt động theo cơ chế Fail-Open: nếu Redis lỗi/chưa bật, hệ thống vẫn chạy bình thường và bỏ qua cache.
+ */
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(RedisService.name);

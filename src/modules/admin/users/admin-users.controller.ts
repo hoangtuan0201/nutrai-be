@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AdminOnly } from '../common/admin-only.decorator';
+import { AdminOnly } from '../../../common/decorators/admin-only.decorator';
 import { AdminUsersService } from './admin-users.service';
 import { GrantProDto } from './dto/grant-pro.dto';
 import { QueryAdminUsersDto } from './dto/query-admin-users.dto';

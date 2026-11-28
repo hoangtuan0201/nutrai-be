@@ -1,5 +1,6 @@
 /**
- * Date and timezone utilities standardized for Vietnam / Indochina time (Asia/Ho_Chi_Minh - UTC+7)
+ * Tiện ích xử lý ngày/giờ chuẩn hóa theo múi giờ Việt Nam (Asia/Ho_Chi_Minh - UTC+7),
+ * giúp đồng bộ ngày log bữa ăn, cân nặng và mục tiêu dinh dưỡng bất kể timezone của server.
  */
 
 export const VIETNAM_TIMEZONE = 'Asia/Ho_Chi_Minh';

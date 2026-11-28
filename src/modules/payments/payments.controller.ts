@@ -13,7 +13,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { AdminOnly } from '../admin/common/admin-only.decorator';
+import { AdminOnly } from '../../common/decorators/admin-only.decorator';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
 import { SePayWebhookDto } from './dto/sepay-webhook.dto';
 import { PaymentsService } from './payments.service';

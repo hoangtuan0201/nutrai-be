@@ -6,7 +6,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { AdminOnly } from '../common/admin-only.decorator';
+import { AdminOnly } from '../../../common/decorators/admin-only.decorator';
 import { AdminFoodsService } from './admin-foods.service';
 import { CreateFoodDto, QueryAdminFoodsDto, UpdateFoodDto } from './dto/food.dto';
 

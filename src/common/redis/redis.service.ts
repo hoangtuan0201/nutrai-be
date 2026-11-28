@@ -94,25 +94,36 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  /** Xóa các key khớp pattern bằng SCAN (từng lô 100 key) để không làm treo Redis. */
+  /**
+   * Xóa hàng loạt key cache khớp với `pattern` (vd: `foods:local:*`) khi dữ liệu thay đổi.
+   *
+   * Tại sao dùng `SCAN` thay vì `KEYS *`:
+   * - Redis chạy đơn luồng (single-threaded); lệnh `KEYS` quét toàn bộ DB một lúc sẽ chặn các request khác.
+   * - `SCAN` duyệt theo con trỏ (`cursor`) từng đợt nhỏ (~100 key/lần), xen kẽ được với các lệnh khác nên không gây treo Redis.
+   */
   async delByPattern(pattern: string): Promise<void> {
+    // Fail-open: nếu Redis chưa kết nối hoặc đang lỗi thì bỏ qua, không làm crash API
     if (!this.isAvailable()) return;
     try {
+      // Redis SCAN luôn bắt đầu từ cursor = '0' và kết thúc khi server trả về nextCursor === '0'
       let cursor = '0';
       do {
         const [nextCursor, keys] = await this.client.scan(
           cursor,
           'MATCH',
-          pattern,
+          pattern, // Lọc key theo pattern (vd: 'foods:local:*')
           'COUNT',
-          100,
+          100, // Gợi ý số lượng slot Redis kiểm tra mỗi vòng lặp
         );
         cursor = nextCursor;
+
+        // Một số vòng SCAN có thể trả về mảng rỗng (vì COUNT lọc trước khi MATCH) -> chỉ DEL khi có key
         if (keys.length > 0) {
           await this.client.del(...keys);
         }
-      } while (cursor !== '0');
+      } while (cursor !== '0'); // Tiếp tục lặp cho tới khi duyệt hết toàn bộ keyspace
     } catch (err) {
+      // Fail-open: chỉ ghi log cảnh báo nếu xóa cache thất bại
       this.logger.warn(`Redis SCAN/DEL failed for ${pattern}: ${(err as Error).message}`);
     }
   }

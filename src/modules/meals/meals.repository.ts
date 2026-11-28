@@ -117,7 +117,7 @@ export class MealsRepository {
         },
       },
       orderBy: {
-        loggedAt: 'asc',
+        loggedAt: 'desc',
       },
     });
   }
